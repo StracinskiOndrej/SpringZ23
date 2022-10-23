@@ -7,10 +7,7 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 
 public class CryptoUtils
@@ -38,9 +35,12 @@ public class CryptoUtils
     {
         try{
             System.out.println("crypto1");
-            Key secretKey = new SecretKeySpec(key.getBytes(), ALGORITHM);
+            KeyGenerator keyGenerator = KeyGenerator.getInstance(ALGORITHM);
+            keyGenerator.init(128);
+            Key secretKey = keyGenerator.generateKey();
+            //Key secretKey = new SecretKeySpec(key.getBytes(), ALGORITHM);
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            System.out.println(secretKey.toString());
+            //System.out.println(secretKey.toString());
             cipher.init(cipherMode, secretKey);
             System.out.println("crypto3");
             FileInputStream inputStream = new FileInputStream(inputFile);
