@@ -61,10 +61,10 @@ public class FileUploadController {
     }
 
     @PostMapping("/decrypt")
-    public void decryptFile(@RequestParam("file") MultipartFile file,
+    public void decryptFile(@RequestParam("file") MultipartFile file, @RequestParam("key") String key,
                                  RedirectAttributes redirectAttributes) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
         storageService.store(file);
-        Encrypt encrypt = new Encrypt(file);
+        Decrypt decrypt = new Decrypt(file, key);
         //return "redirect:http://147.175.121.147/z23/index.html";
     }
 
