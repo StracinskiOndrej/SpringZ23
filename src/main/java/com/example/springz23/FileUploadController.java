@@ -73,17 +73,26 @@ public class FileUploadController {
         File f = new File(path);
         f.mkdir();
 
+        try (FileOutputStream out = new FileOutputStream( path+"/toEncrypt.txt")) {
+            out.write(file.getBytes());
+        }
+
+
         try (FileOutputStream out = new FileOutputStream( path+"/private.key")) {
             out.write(keyPair.getPrivate().getEncoded());
         }
         try (FileOutputStream out = new FileOutputStream( path+"/public.key")) {
             out.write(keyPair.getPublic().getEncoded());
         }
+        try (FileOutputStream out = new FileOutputStream( path+"/fKey.key")) {
+            out.write(keyStr.getBytes());
+        }
 
 
-        Encrypt encrypt = new Encrypt(file, keyStr, path);
-
-        encrypt.EncryptKey(keyStream,keyPair.getPrivate(), path );
+         Encrypt encrypt = new Encrypt();
+        encrypt.EncryptI(path);
+//
+//        encrypt.EncryptKey(keyStream,keyPair.getPrivate(), path );
 
         InputStream in = new FileInputStream(encrypt.getRealPath());
         return ResponseEntity.ok()

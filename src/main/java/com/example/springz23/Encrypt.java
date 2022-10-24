@@ -14,7 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 public class Encrypt {
-    private final File encrypted;
+    private File encrypted;
     private static String pathK;
     public Encrypt(MultipartFile file, String keyStr, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
         pathK = path;
@@ -29,6 +29,9 @@ public class Encrypt {
         }
     }
 
+    public Encrypt() {
+    }
+
     public void EncryptKey(InputStream keyStr, Key keyPriv, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
 
         try {
@@ -39,6 +42,11 @@ public class Encrypt {
         }
 
     }
+    public void EncryptI(String path) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, InvalidKeySpecException, IOException, BadPaddingException, InvalidKeyException {
+        CryptoUtils.EncI(path);
+        this.encrypted = new File(path+"/encrypted" + ".enc");
+    }
+
 
 
 

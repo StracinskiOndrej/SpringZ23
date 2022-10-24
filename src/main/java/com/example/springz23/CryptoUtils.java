@@ -1,14 +1,17 @@
 package com.example.springz23;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 
 /**
  * A utility class that encrypts or decrypts a file.
@@ -104,6 +107,57 @@ public class CryptoUtils {
         }
     }
 
+    public static void EncI(String path) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, IOException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
+        byte[] m = Files.readAllBytes(Path.of(path+"/toEncrypt.txt"));
+
+        //generovanie nahodneho symetrickeho kluca
+        KeyGenerator kgen = KeyGenerator.getInstance("AES");
+        kgen.init(128); /* 128-bit AES */
+        SecretKey sk = kgen.generateKey();
+
+
+        //generovanie IV
+        SecureRandom srandom = new SecureRandom();
+        byte[] iv = new byte[16];
+        srandom.nextBytes(iv);
+        IvParameterSpec ivspec = new IvParameterSpec(iv);
+
+        //cipher mode enc dec spec
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, sk, new GCMParameterSpec(128, iv));
+        //cipherMode => DECRYPT_MODE / ENCRYPT_MODE
+
+        //encrypt message m => c2
+        byte[] mEnc = cipher.doFinal(m);
+
+
+        //nacitanie VKA zo suboru
+        byte[] keyb = Files.readAllBytes(Paths. get(path+"/fKey.key"));
+        X509EncodedKeySpec ks = new X509EncodedKeySpec(keyb);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        PublicKey vka = kf.generatePublic(ks);
+
+        //zasifrovanie sk pomocou vka => c1
+        FileOutputStream out = new FileOutputStream(path+"/encrypted" + ".enc");
+        {
+            cipher = Cipher.getInstance("RSA/ECB/OAEPwithSHA-256andMGF1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, vka); // Encrypt using A's public key
+            byte[] c1 = cipher.doFinal(sk.getEncoded());
+            out.write(c1); //zapisanie encrypt secure key do file
+        }
+        //zapisanie IV do suboru
+        out.write(iv);
+
+        //vytvorenie signature
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(sk);
+        byte[] macResult = mac.doFinal(mEnc);
+
+        //zapisanie c2 do suboru
+        out.write(mEnc);
+
+        out.close();
+    }
 
 }
 
