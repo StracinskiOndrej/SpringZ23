@@ -1,15 +1,14 @@
 package com.example.springz23;
 
-import java.io.*;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.*;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * A utility class that encrypts or decrypts a file.
@@ -41,14 +40,17 @@ public class CryptoUtils {
 
             byte[] inputBytes = new byte[16384];
             try (OutputStream outputStream = new FileOutputStream(outputFile)) {
-                while (inputStream.read(inputBytes) != -1) {
-                    if(inputStream.available() < 16384){
-                        outputStream.write(cipher.doFinal(inputBytes));
-                    } else {
-                        outputStream.write(cipher.update(inputBytes));
-                    }
+                int count = inputStream.read(inputBytes);
+
+                while (count >= 0) {
+                    outputStream.write(cipher.update(inputBytes, 0, count)); // HERE I WAS DOING doFinal() method
+
+                    //AND HERE WAS THE BadPaddingExceotion -- the first pass in the while structure
+
+                    count = inputStream.read(inputBytes);
                 }
-                outputStream.close();
+                outputStream.write(cipher.doFinal()); // AND I DID NOT HAD THIS LINE BEFORE
+                outputStream.flush();
             }
             inputStream.close();
 
@@ -57,5 +59,6 @@ public class CryptoUtils {
             throw new CryptoException("Error encrypting/decrypting file", ex);
         }
     }
+
 }
 
