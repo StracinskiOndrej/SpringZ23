@@ -64,16 +64,17 @@ public class FileUploadController {
         KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
         keyPairGen.initialize(2048);
         KeyPair keyPair = keyPairGen.generateKeyPair();
-        try (FileOutputStream out = new FileOutputStream( file.getName()+"_private.key")) {
+        try (FileOutputStream out = new FileOutputStream( "private.key")) {
             out.write(keyPair.getPrivate().getEncoded());
         }
 
-        try (FileOutputStream out = new FileOutputStream( file.getName()+"_public.key")) {
+        try (FileOutputStream out = new FileOutputStream( "public.key")) {
             out.write(keyPair.getPublic().getEncoded());
         }
+
         Encrypt encrypt = new Encrypt(file, keyStr);
 
-        encrypt.EncryptKey(keyStream,keyPair.getPrivate(), keyPair.getPublic().getEncoded().toString() );
+        encrypt.EncryptKey(keyStream,keyPair.getPrivate(), keyPair.getPublic() );
 
         InputStream in = new FileInputStream(encrypt.getRealPath());
         return ResponseEntity.ok()
@@ -94,7 +95,7 @@ public class FileUploadController {
     }
 
     @PostMapping("/decrypt")
-    public ResponseEntity<InputStreamResource> decryptFile(@RequestParam("file") MultipartFile file, @RequestParam("key") MultipartFile key,
+    public ResponseEntity<InputStreamResource> decryptFile(@RequestParam("file") MultipartFile file, @RequestParam("key") MultipartFile PublicKey,
                                                            RedirectAttributes redirectAttributes) throws Exception {
         try {
             storageService.store(file);
@@ -103,6 +104,7 @@ public class FileUploadController {
             return ResponseEntity.
                     badRequest().body(new InputStreamResource(InputStream.nullInputStream()));
         }
+
         Decrypt decrypt = new Decrypt(file, key);
         InputStream in = new FileInputStream(decrypt.getRealPath());
         return ResponseEntity.ok()

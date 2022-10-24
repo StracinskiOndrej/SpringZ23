@@ -4,9 +4,7 @@ import org.apache.tika.Tika;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.crypto.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
@@ -29,10 +27,9 @@ public class Encrypt {
         } catch (CryptoException e) {
             throw new RuntimeException(e);
         }
-        outputKey(keyStr);
     }
 
-    public void EncryptKey(InputStream keyStr, Key keyPriv, String keyOut) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+    public void EncryptKey(InputStream keyStr, Key keyPriv, Key keyOut) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
 
         try {
             File encKey = new File("encKey.txt");
@@ -40,22 +37,22 @@ public class Encrypt {
         } catch (CryptoException e) {
             throw new RuntimeException(e);
         }
-        outputKey(keyOut);
+
     }
 
 
 
 
-    private void outputKey(String keyText) {
-        System.out.println(keyText);
-
-        try {
-            key = "key_public.text";
-            Files.writeString(Path.of(key), keyText);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//        try {
+//        key = "key_public.key";
+//        FileOutputStream out = new FileOutputStream(key);
+//        out.write(keyText.getEncoded());
+//    } catch (
+//    FileNotFoundException e) {
+//        throw new RuntimeException(e);
+//    } catch (IOException e) {
+//        throw new RuntimeException(e);
+//    }
     public String getRealPath(){
         System.out.println(encrypted.getPath());
         return this.encrypted.getPath();
