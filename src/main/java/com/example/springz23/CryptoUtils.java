@@ -1,67 +1,64 @@
 package com.example.springz23;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import javax.crypto.*;
-import javax.crypto.spec.SecretKeySpec;
 
-public class CryptoUtils
-{
-    private static final String ALGORITHM="AES";
-    private static final String TRANSFORMATION="AES";
+/**
+ * A utility class that encrypts or decrypts a file.
+ * @author www.codejava.net
+ *
+ */
+public class CryptoUtils {
+    private static final String ALGORITHM = "AES";
+    private static final String TRANSFORMATION = "AES";
 
-    public static FileOutputStream encrypt(String key, File inputFile) throws Exception
-    {
-        System.out.println(key);
-        System.out.println(key.getBytes());
-        System.out.println("JEBEM SA DO RITI");
-        File file = new File("output.txt");
-        System.out.println("enc MARS");
-        FileOutputStream f = doCrypto(Cipher.ENCRYPT_MODE, key, inputFile, file);
-        return f;
+    public static void encrypt(String key, InputStream inputStream, File outputFile)
+            throws CryptoException {
+        doCrypto(Cipher.ENCRYPT_MODE, key, inputStream, outputFile);
     }
 
-    public static void decrypt(String key, File inputFile, File outputFile) throws Exception
-    {
-        //doCrypto(Cipher.DECRYPT_MODE, key, inputFile, outputFile);
+    public static void decrypt(String key, InputStream inputStream, File outputFile)
+            throws CryptoException {
+        doCrypto(Cipher.DECRYPT_MODE, key, inputStream, outputFile);
     }
 
-    private static FileOutputStream doCrypto(int cipherMode, String key, File inputFile, File outputFile) throws Exception
-    {
-        try{
-            System.out.println("crypto1");
-            KeyGenerator keyGenerator = KeyGenerator.getInstance(ALGORITHM);
-            keyGenerator.init(128);
-            Key secretKey = keyGenerator.generateKey();
-            //Key secretKey = new SecretKeySpec(key.getBytes(), ALGORITHM);
+    private static void doCrypto(int cipherMode, String key, InputStream inputStream,
+                                 File outputFile) throws CryptoException {
+        try {
+            Key secretKey = new SecretKeySpec(key.getBytes(), ALGORITHM);
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            //System.out.println(secretKey.toString());
             cipher.init(cipherMode, secretKey);
-            System.out.println("crypto3");
-            FileInputStream inputStream = new FileInputStream(inputFile);
-            System.out.println("crypto4");
-            byte[] inputBytes = new byte[(int)inputFile.length()];
-            System.out.println("cryptokokot");
-            inputStream.read(inputBytes);
-            System.out.println("cryptokokotpica");
-            byte[] outputBytes = cipher.doFinal(inputBytes);
-            FileOutputStream outputStream = new FileOutputStream(outputFile);
-            outputStream.write(outputBytes);
+
+            //byte[] inputBytes = new byte[(int) inputFile.length()];
+
+            byte[] inputBytes = new byte[16384];
+            try (OutputStream outputStream = new FileOutputStream(outputFile)) {
+                int count = inputStream.read(inputBytes);
+
+                while (count >= 0) {
+                    outputStream.write(cipher.update(inputBytes, 0, count)); // HERE I WAS DOING doFinal() method
+
+                    //AND HERE WAS THE BadPaddingExceotion -- the first pass in the while structure
+
+                    count = inputStream.read(inputBytes);
+                }
+                outputStream.write(cipher.doFinal()); // AND I DID NOT HAD THIS LINE BEFORE
+                outputStream.flush();
+            }
             inputStream.close();
-            outputStream.close();
-            System.out.println("cryptokokotpicajebanica");
-            return outputStream;
-        }
-        catch(NoSuchPaddingException | NoSuchAlgorithmException
-                | InvalidKeyException|BadPaddingException
-                | IllegalBlockSizeException|IOException ex)
-        {
-            throw new Exception("Errorencrypting/decryptingfile"+ex.getMessage(),ex);
+
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | IOException
+                                        | IllegalArgumentException | IllegalBlockSizeException | BadPaddingException ex) {
+            throw new CryptoException("Error encrypting/decrypting file", ex);
         }
     }
+
 }
+
