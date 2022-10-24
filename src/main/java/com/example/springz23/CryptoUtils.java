@@ -32,6 +32,10 @@ public class CryptoUtils {
             throws CryptoException {
         doCrypto(Cipher.DECRYPT_MODE, key, inputStream, outputFile);
     }
+    public static void decryptKey(Key key, InputStream inputStream, File outputFile)
+            throws CryptoException {
+        doCryptoKey(Cipher.DECRYPT_MODE, key, inputStream, outputFile);
+    }
 
     private static void doCrypto(int cipherMode, String key, InputStream inputStream,
                                  File outputFile) throws CryptoException {

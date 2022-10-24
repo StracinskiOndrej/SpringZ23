@@ -15,24 +15,24 @@ import java.security.spec.InvalidKeySpecException;
 
 public class Encrypt {
     private final File encrypted;
-    private static String key;
-    public Encrypt(MultipartFile file, String keyStr) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
-
+    private static String pathK;
+    public Encrypt(MultipartFile file, String keyStr, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+        pathK = path;
         try {
             Tika tika = new Tika();
             String type = tika.detect(file.getBytes());
             type = MimeTypes.getDefaultExt(type);
-            this.encrypted =new File("encrypted."+type);
+            this.encrypted =new File(path+"/encrypted."+type);
             CryptoUtils.encrypt(keyStr, file.getInputStream(), encrypted);
         } catch (CryptoException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void EncryptKey(InputStream keyStr, Key keyPriv, Key keyOut) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+    public void EncryptKey(InputStream keyStr, Key keyPriv, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
 
         try {
-            File encKey = new File("encKey.txt");
+            File encKey = new File(path+"/encKey.txt");
             CryptoUtils.encryptKey(keyPriv, keyStr, encKey);
         } catch (CryptoException e) {
             throw new RuntimeException(e);
@@ -54,10 +54,9 @@ public class Encrypt {
 //        throw new RuntimeException(e);
 //    }
     public String getRealPath(){
-        System.out.println(encrypted.getPath());
         return this.encrypted.getPath();
     }
     public static String getKeyPath(){
-        return key;
+        return pathK;
     }
 }
