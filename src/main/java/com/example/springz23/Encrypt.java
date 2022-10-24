@@ -46,7 +46,7 @@ public class Encrypt {
         System.out.println(keyText);
 
         try {
-            key = "key_"+encrypted.getName()+".text";
+            key = "key_"+encrypted.getName();
             Files.writeString(Path.of(key), keyText);
         } catch (IOException e) {
             throw new RuntimeException(e);
