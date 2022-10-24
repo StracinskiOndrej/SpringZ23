@@ -103,17 +103,17 @@ public class FileUploadController {
     }
 
 
-    //ResponseEntity<InputStreamResource>
+    //
     @PostMapping("/decrypt")
-    public String decryptFile(@RequestParam("file") MultipartFile file, @RequestParam("key") MultipartFile PublicKey,
+    public ResponseEntity<InputStreamResource> decryptFile(@RequestParam("file") MultipartFile file, @RequestParam("key") MultipartFile PublicKey,
                                                            RedirectAttributes redirectAttributes) throws Exception {
-//        try {
-//            storageService.store(file);
-//        }
-//        catch (Exception e){
-//            return ResponseEntity.
-//                    badRequest().body(new InputStreamResource(InputStream.nullInputStream()));
-//        }
+        try {
+            storageService.store(file);
+        }
+        catch (Exception e){
+            return ResponseEntity.
+                    badRequest().body(new InputStreamResource(InputStream.nullInputStream()));
+        }
         String path = Base64.getEncoder().encodeToString(PublicKey.getBytes());
         path = path.substring(0, 12);
         Key privKey = getPKeyFFile(path+"/private.key");
@@ -121,11 +121,13 @@ public class FileUploadController {
         Decrypt decrypt = new Decrypt();
         decrypt.DecryptKey(encKey,privKey, path);
 
-//        Decrypt decrypt = new Decrypt(file, PublicKey);
-//        InputStream in = new FileInputStream(decrypt.getRealPath());
-//       return ResponseEntity.ok()
-//               .body(new InputStreamResource(in));
-        return "redirect:http://147.175.121.147/z23/index.html";
+        Key finKey = getPKeyFFile(path+"/decryptedKey.txt");
+
+        decrypt.DecryptByKey(file, finKey);
+        InputStream in = new FileInputStream(decrypt.getRealPath());
+       return ResponseEntity.ok()
+               .body(new InputStreamResource(in));
+        //return "redirect:http://147.175.121.147/z23/index.html";
     }
 
     @ExceptionHandler(StorageFileNotFoundException.class)

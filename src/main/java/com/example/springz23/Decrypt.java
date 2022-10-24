@@ -34,14 +34,23 @@ public class Decrypt {
         }
     }
 
+    public void DecryptByKey(MultipartFile file, Key key) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+        try {
+            decrypt = new File("decrypted.txt");
+            CryptoUtils.decryptByKey(key, file.getInputStream(), decrypt);
+        } catch (CryptoException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public Decrypt() {
     }
 
     public void DecryptKey(File file, Key key, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
         try {
             InputStream targetStream = new FileInputStream(file);
-            this.decryptKey = new File(path+"/decryptedKey." + "key");
-            CryptoUtils.decryptKey(key, targetStream, decrypt);
+            this.decryptKey = new File(path+"/decryptedKey.key");
+            CryptoUtils.decryptKey(key, targetStream, decryptKey);
         } catch (CryptoException e) {
             throw new RuntimeException(e);
         }
