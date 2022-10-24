@@ -14,9 +14,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -56,14 +54,17 @@ public class FileUploadController {
     public ResponseEntity<InputStreamResource> encryptFile(HttpServletResponse response, @RequestParam("file") MultipartFile file,
                                                            RedirectAttributes redirectAttributes) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
         response.setContentType("multipart/text");
-        try {
-            storageService.store(file);
+        String path = file.getOriginalFilename();
+
+        File f = new File(path);
+        f.mkdir();
+
+        try (FileOutputStream out = new FileOutputStream( path+"/"+file.getName())) {
+            out.write(file.getBytes());
         }
-        catch (Exception e){
-            return ResponseEntity.
-                    badRequest().body(new InputStreamResource(InputStream.nullInputStream()));
-        }
-        Encrypt encrypt = new Encrypt(file);
+
+
+        Encrypt encrypt = new Encrypt(file, path);
 
         InputStream in = new FileInputStream(encrypt.getRealPath());
         return ResponseEntity.ok()
@@ -86,14 +87,12 @@ public class FileUploadController {
     @PostMapping("/decrypt")
     public ResponseEntity<InputStreamResource> decryptFile(@RequestParam("file") MultipartFile file, @RequestParam("key") MultipartFile key,
                                                            RedirectAttributes redirectAttributes) throws Exception {
-        try {
-            storageService.store(file);
-        }
-        catch (Exception e){
-            return ResponseEntity.
-                    badRequest().body(new InputStreamResource(InputStream.nullInputStream()));
-        }
-        Decrypt decrypt = new Decrypt(file, key);
+
+
+        String path = file.getOriginalFilename();
+        File f = new File(path);
+        f.mkdir();
+        Decrypt decrypt = new Decrypt(file, key, path);
         InputStream in = new FileInputStream(decrypt.getRealPath());
         return ResponseEntity.ok()
                 .body(new InputStreamResource(in));
