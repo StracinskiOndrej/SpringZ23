@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Files;
@@ -73,13 +74,16 @@ public class FileUploadController {
         File f = new File(path);
         f.mkdir();
 
-        try (FileOutputStream out = new FileOutputStream( path+"/private.key")) {
-            out.write(keyPair.getPrivate().getEncoded());
-        }
+        PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(
+                keyPair.getPrivate().getEncoded());
+        FileOutputStream fos = new FileOutputStream(path + "/private.key");
+        fos.write(pkcs8EncodedKeySpec.getEncoded());
+        fos.close();
+
         try (FileOutputStream out = new FileOutputStream( path+"/public.key")) {
             out.write(keyPair.getPublic().getEncoded());
         }
-
+        System.out.println("here: "+keyPair.getPrivate().getEncoded()+" end");
 
         Encrypt encrypt = new Encrypt(file, keyStr, path);
 
@@ -116,10 +120,25 @@ public class FileUploadController {
         }
         String path = Base64.getEncoder().encodeToString(PublicKey.getBytes());
         path = path.substring(0, 12);
-        Key privKey = getPKeyFFile(path+"/private.key");
+
+        File filePrivateKey = new File(path + "/private.key");
+        FileInputStream fis = new FileInputStream(path + "/private.key");
+        byte[] encodedPrivateKey = new byte[(int) filePrivateKey.length()];
+        fis.read(encodedPrivateKey);
+        fis.close();
+
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+        PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(
+                encodedPrivateKey);
+        PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
+
+
+
+        System.out.println("here: "+privateKey.getEncoded()+" end");
         File encKey = new File(path+"/encKey.txt");
         Decrypt decrypt = new Decrypt();
-        decrypt.DecryptKey(encKey,privKey, path);
+        decrypt.DecryptKey(encKey,privateKey, path);
 
         Key finKey = getPKeyFFile(path+"/decryptedKey.txt");
 
