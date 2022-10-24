@@ -6,19 +6,20 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.crypto.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
 
 public class Encrypt {
     private final File encrypted;
     private static String key;
-    public Encrypt(MultipartFile file) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
-        String keyStr = generateKey();
+    public Encrypt(MultipartFile file, String keyStr) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+
         try {
             Tika tika = new Tika();
             String type = tika.detect(file.getBytes());
@@ -31,22 +32,25 @@ public class Encrypt {
         outputKey(keyStr);
     }
 
-    private String generateKey() {
-        SecretKey secretKey = null;
+    public void EncryptKey(InputStream keyStr, Key keyPriv, String keyOut) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+
         try {
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-            keyGen.init(128); // for example
-            secretKey = keyGen.generateKey();
-        } catch (Exception ignored) {
+            File encKey = new File("encKey.txt");
+            CryptoUtils.encryptKey(keyPriv, keyStr, encKey);
+        } catch (CryptoException e) {
+            throw new RuntimeException(e);
         }
-        return Base64.getEncoder().encodeToString(secretKey.getEncoded());
+        outputKey(keyOut);
     }
+
+
+
 
     private void outputKey(String keyText) {
         System.out.println(keyText);
 
         try {
-            key = "key_"+encrypted.getName()+".text";
+            key = "key_public.text";
             Files.writeString(Path.of(key), keyText);
         } catch (IOException e) {
             throw new RuntimeException(e);

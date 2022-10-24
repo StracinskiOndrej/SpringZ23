@@ -23,6 +23,10 @@ public class CryptoUtils {
             throws CryptoException {
         doCrypto(Cipher.ENCRYPT_MODE, key, inputStream, outputFile);
     }
+    public static void encryptKey(Key key, InputStream inputStream, File outputFile)
+            throws CryptoException {
+        doCryptoKey(Cipher.ENCRYPT_MODE, key, inputStream, outputFile);
+    }
 
     public static void decrypt(String key, InputStream inputStream, File outputFile)
             throws CryptoException {
@@ -59,6 +63,38 @@ public class CryptoUtils {
             throw new CryptoException("Error encrypting/decrypting file", ex);
         }
     }
+
+    private static void doCryptoKey(int cipherMode, Key key, InputStream inputStream,
+                                 File outputFile) throws CryptoException {
+        try {
+            Key secretKey = key;
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(cipherMode, secretKey);
+
+            //byte[] inputBytes = new byte[(int) inputFile.length()];
+
+            byte[] inputBytes = new byte[16384];
+            try (OutputStream outputStream = new FileOutputStream(outputFile)) {
+                int count = inputStream.read(inputBytes);
+
+                while (count >= 0) {
+                    outputStream.write(cipher.update(inputBytes, 0, count)); // HERE I WAS DOING doFinal() method
+
+                    //AND HERE WAS THE BadPaddingExceotion -- the first pass in the while structure
+
+                    count = inputStream.read(inputBytes);
+                }
+                outputStream.write(cipher.doFinal()); // AND I DID NOT HAD THIS LINE BEFORE
+                outputStream.flush();
+            }
+            inputStream.close();
+
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | IOException
+                 | IllegalArgumentException | IllegalBlockSizeException | BadPaddingException ex) {
+            throw new CryptoException("Error encrypting/decrypting file", ex);
+        }
+    }
+
 
 }
 

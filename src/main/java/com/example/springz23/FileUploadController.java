@@ -2,6 +2,7 @@ package com.example.springz23;
 
 import com.example.springz23.storage.StorageFileNotFoundException;
 import com.example.springz23.storage.StorageService;
+import org.apache.tika.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
@@ -10,17 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.io.*;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 
 @Controller
 @CrossOrigin
@@ -63,7 +59,21 @@ public class FileUploadController {
             return ResponseEntity.
                     badRequest().body(new InputStreamResource(InputStream.nullInputStream()));
         }
-        Encrypt encrypt = new Encrypt(file);
+        String keyStr = generateKey();
+        InputStream keyStream = IOUtils.toInputStream(keyStr);
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
+        keyPairGen.initialize(2048);
+        KeyPair keyPair = keyPairGen.generateKeyPair();
+        try (FileOutputStream out = new FileOutputStream( file.getName()+"_private.key")) {
+            out.write(keyPair.getPrivate().getEncoded());
+        }
+
+        try (FileOutputStream out = new FileOutputStream( file.getName()+"_public.key")) {
+            out.write(keyPair.getPublic().getEncoded());
+        }
+        Encrypt encrypt = new Encrypt(file, keyStr);
+
+        encrypt.EncryptKey(keyStream,keyPair.getPrivate(), keyPair.getPublic().getEncoded().toString() );
 
         InputStream in = new FileInputStream(encrypt.getRealPath());
         return ResponseEntity.ok()
@@ -103,6 +113,18 @@ public class FileUploadController {
     @ExceptionHandler(StorageFileNotFoundException.class)
     public ResponseEntity<?> handleStorageFileNotFound(StorageFileNotFoundException exc) {
         return ResponseEntity.notFound().build();
+    }
+
+
+    private String generateKey() {
+        SecretKey secretKey = null;
+        try {
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+            keyGen.init(128); // for example
+            secretKey = keyGen.generateKey();
+        } catch (Exception ignored) {
+        }
+        return Base64.getEncoder().encodeToString(secretKey.getEncoded());
     }
 
 }
