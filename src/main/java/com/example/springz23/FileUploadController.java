@@ -1,7 +1,12 @@
 package com.example.springz23;
 
+import com.example.springz23.db.UserAccount;
+import com.example.springz23.services.UserService;
 import com.example.springz23.storage.StorageFileNotFoundException;
 import com.example.springz23.storage.StorageService;
+import com.example.springz23.utilities.Decrypt;
+import com.example.springz23.utilities.Encrypt;
+import com.example.springz23.utilities.Salt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -19,6 +25,8 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import java.util.Optional;
 
 @Controller
 @CrossOrigin
@@ -26,29 +34,56 @@ public class FileUploadController {
     private final StorageService storageService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     public FileUploadController(StorageService storageService) {
         this.storageService = storageService;
     }
 
-//    @GetMapping("/")
-//    public String listUploadedFiles(Model model) throws IOException {
-//
-//        model.addAttribute("files", storageService.loadAll().map(
-//                        path -> MvcUriComponentsBuilder.fromMethodName(FileUploadController.class,
-//                                "serveFile", path.getFileName().toString()).build().toUri().toString())
-//                .collect(Collectors.toList()));
-//
-//        return "uploadForm";
-//    }
+    @PostMapping("/register")
+    public String register(@RequestParam(value = "name") String username,
+                           @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException {
+        if (userService.getUser(username).isPresent()) {
+            return "error"; // redirect to some error html
+        } else {
+            byte[] salt = Salt.getSalt();
+            byte[] hash = Salt.getSaltedHash(pw, salt);
+            UserAccount account = new UserAccount(username, salt, hash);
+            userService.save(account);
+            return "ok"; // redirect to some logged html
+        }
+    }
 
-//    @GetMapping("/files/{filename:.+}")
-//    @ResponseBody
-//    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-//
-//        Resource file = storageService.loadAsResource(filename);
-//        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
-//                "attachment; filename=\"" + file.getFilename() + "\"").body(file);
-//    }
+    @PostMapping("/login")
+    public RedirectView login(@RequestParam(value = "name") String username,
+                              @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException {
+
+        if (userService.getUser(username).isPresent()) {
+            Optional<UserAccount> user = userService.getUser(username);
+            byte[] newSaltedHash = Salt.getSaltedHash(pw, user.get().getSalt());
+
+            if (Arrays.equals(newSaltedHash, user.get().getSaltedHash())) {
+                return new RedirectView("/logged");
+            } else {
+                // Not correct password
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+                return new RedirectView("/");
+            }
+        } else {
+            // Name not in db
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+            return new RedirectView("/");
+        }
+    }
 
     @PostMapping("/encrypt")
     public ResponseEntity<InputStreamResource> encryptFile(HttpServletResponse response, @RequestParam("file") MultipartFile file,

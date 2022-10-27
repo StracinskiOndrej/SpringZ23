@@ -1,5 +1,6 @@
-package com.example.springz23;
+package com.example.springz23.utilities;
 
+import com.example.springz23.CryptoException;
 import org.apache.tika.Tika;
 import org.springframework.web.multipart.MultipartFile;
 

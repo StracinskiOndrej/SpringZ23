@@ -1,4 +1,4 @@
-package com.example.springz23;
+package com.example.springz23.utilities;
 import java.util.HashMap;
 
 /**
