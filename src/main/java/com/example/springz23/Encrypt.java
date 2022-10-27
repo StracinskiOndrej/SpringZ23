@@ -4,20 +4,21 @@ import org.apache.tika.Tika;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.crypto.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 
 public class Encrypt {
-    private File encrypted;
-    private static String pathK;
-    public Encrypt(MultipartFile file, String keyStr, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
-        pathK = path;
+    private final File encrypted;
+    private static String key;
+    public Encrypt(MultipartFile file, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+        String keyStr = generateKey();
         try {
             Tika tika = new Tika();
             String type = tika.detect(file.getBytes());
@@ -27,44 +28,35 @@ public class Encrypt {
         } catch (CryptoException e) {
             throw new RuntimeException(e);
         }
+        outputKey(keyStr, path);
     }
 
-    public Encrypt() {
+    private String generateKey() {
+        SecretKey secretKey = null;
+        try {
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+            keyGen.init(128); // for example
+            secretKey = keyGen.generateKey();
+        } catch (Exception ignored) {
+        }
+        return Base64.getEncoder().encodeToString(secretKey.getEncoded());
     }
 
-    public void EncryptKey(InputStream keyStr, Key keyPriv, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+    private void outputKey(String keyText, String path) {
+        System.out.println(keyText);
 
         try {
-            File encKey = new File(path+"/encKey.txt");
-            CryptoUtils.encryptKey(keyPriv, keyStr, encKey);
-        } catch (CryptoException e) {
+            key = path+"/key_"+encrypted.getName()+".text";
+            Files.writeString(Path.of(key), keyText);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
-    public void EncryptI(String path) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, InvalidKeySpecException, IOException, BadPaddingException, InvalidKeyException {
-        CryptoUtils.EncI(path);
-        this.encrypted = new File(path+"/encrypted" + ".enc");
-    }
-
-
-
-
-
-//        try {
-//        key = "key_public.key";
-//        FileOutputStream out = new FileOutputStream(key);
-//        out.write(keyText.getEncoded());
-//    } catch (
-//    FileNotFoundException e) {
-//        throw new RuntimeException(e);
-//    } catch (IOException e) {
-//        throw new RuntimeException(e);
-//    }
     public String getRealPath(){
+        System.out.println(encrypted.getPath());
         return this.encrypted.getPath();
     }
     public static String getKeyPath(){
-        return pathK;
+        return key;
     }
 }
