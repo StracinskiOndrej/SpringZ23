@@ -10,6 +10,8 @@ public class UserAccount {
     private byte[] salt;
     private byte[] saltedHash;
 
+    private Integer i = 1;
+
     public UserAccount(String username, byte[] salt, byte[] saltedHash) {
         this.username = username;
         this.salt = salt;
@@ -26,6 +28,13 @@ public class UserAccount {
 
     public String getUsername() {
         return username;
+    }
+    public Integer getI() {
+        return i;
+    }
+
+    public void setI(Integer i) {
+        this.i = i;
     }
 
     public void setUsername(String username) {

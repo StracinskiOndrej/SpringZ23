@@ -63,32 +63,31 @@ public class FileUploadController {
         if (userService.getUser(username).isPresent()) {
             Optional<UserAccount> user = userService.getUser(username);
             byte[] newSaltedHash = Salt.getSaltedHash(pw, user.get().getSalt());
+            Integer k;
+            k = user.get().getI();
+            try {
+                Thread.sleep(k*10000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            user.get().setI(k*2);
+            userService.save(user.get());
 
             if (Arrays.equals(newSaltedHash, user.get().getSaltedHash())) {
                 System.out.println("1");
+                user.get().setI(1);
+                userService.save(user.get());
                 //return new RedirectView("http://147.175.121.147/z45/index.html");
                 return "OK";
             } else {
                 System.out.println("2");
-
                 // Not correct password
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
                 //return new RedirectView("http://147.175.121.147/z45/login.html");
                 return "wrong password";
             }
         } else {
             System.out.println("3");
-
             // Name not in db
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-            }
             //return new RedirectView("http://147.175.121.147/z45/login.html");
             return "wrong username";
         }
