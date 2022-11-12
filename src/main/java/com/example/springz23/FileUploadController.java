@@ -28,8 +28,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Optional;
 
-@Controller
 @CrossOrigin
+@RestController
+@RequestMapping(value= "/")
 public class FileUploadController {
     private final StorageService storageService;
 
@@ -56,7 +57,7 @@ public class FileUploadController {
     }
 
     @PostMapping("/login")
-    public RedirectView login(@RequestParam(value = "name") String username,
+    public String login(@RequestParam(value = "name") String username,
                               @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException {
 
         if (userService.getUser(username).isPresent()) {
@@ -64,24 +65,32 @@ public class FileUploadController {
             byte[] newSaltedHash = Salt.getSaltedHash(pw, user.get().getSalt());
 
             if (Arrays.equals(newSaltedHash, user.get().getSaltedHash())) {
-                return new RedirectView("/logged");
+                System.out.println("1");
+                //return new RedirectView("http://147.175.121.147/z45/index.html");
+                return "OK";
             } else {
+                System.out.println("2");
+
                 // Not correct password
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-                return new RedirectView("/");
+                //return new RedirectView("http://147.175.121.147/z45/login.html");
+                return "wrong password";
             }
         } else {
+            System.out.println("3");
+
             // Name not in db
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
-            return new RedirectView("/");
+            //return new RedirectView("http://147.175.121.147/z45/login.html");
+            return "wrong username";
         }
     }
 
