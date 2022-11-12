@@ -46,13 +46,13 @@ public class FileUploadController {
     public String register(@RequestParam(value = "name") String username,
                            @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException {
         if (userService.getUser(username).isPresent()) {
-            return "error"; // redirect to some error html
+            return "Username already exists"; // redirect to some error html
         } else {
             byte[] salt = Salt.getSalt();
             byte[] hash = Salt.getSaltedHash(pw, salt);
             UserAccount account = new UserAccount(username, salt, hash);
             userService.save(account);
-            return "ok"; // redirect to some logged html
+            return "User created"; // redirect to some logged html
         }
     }
 
@@ -66,7 +66,7 @@ public class FileUploadController {
             Integer k;
             k = user.get().getI();
             try {
-                Thread.sleep(k*10000);
+                Thread.sleep(k*1000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -83,13 +83,13 @@ public class FileUploadController {
                 System.out.println("2");
                 // Not correct password
                 //return new RedirectView("http://147.175.121.147/z45/login.html");
-                return "wrong password";
+                return "Wrong password";
             }
         } else {
             System.out.println("3");
             // Name not in db
             //return new RedirectView("http://147.175.121.147/z45/login.html");
-            return "wrong username";
+            return "Wrong username";
         }
     }
 
