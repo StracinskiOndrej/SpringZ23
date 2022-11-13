@@ -8,20 +8,15 @@ import com.example.springz23.utilities.Decrypt;
 import com.example.springz23.utilities.Encrypt;
 import com.example.springz23.utilities.Salt;
 import org.passay.*;
-import org.passay.dictionary.ArrayWordList;
 import org.passay.dictionary.WordListDictionary;
 import org.passay.dictionary.WordLists;
-import org.passay.dictionary.sort.ArraySorter;
 import org.passay.dictionary.sort.ArraysSort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.junit.Assert;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.servlet.view.RedirectView;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -33,32 +28,28 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 @CrossOrigin
 @RestController
 @RequestMapping(value= "/")
 public class FileUploadController {
-    private final StorageService storageService;
 
     @Autowired
     private UserService userService;
 
     @Autowired
     public FileUploadController(StorageService storageService) {
-        this.storageService = storageService;
     }
 
     @PostMapping("/name")
     public String getName(@RequestParam(value = "user") String user
-    ) throws NoSuchAlgorithmException {
+    ){
 
         if (userService.getUser(user).isPresent()) {
 
             Optional<UserAccount> account = userService.getUser(user);
-            String name = account.get().getName();
-            return name;
+            return account.get().getName();
 
         } else {
             return "Receiver username not found.";
@@ -71,8 +62,7 @@ public class FileUploadController {
         if (userService.getUser(user).isPresent()) {
 
             Optional<UserAccount> account = userService.getUser(user);
-            String name = account.get().getLastName();
-            return name;
+            return account.get().getLastName();
 
         } else {
             return "Receiver username not found.";
@@ -125,28 +115,21 @@ public class FileUploadController {
     }
     @PostMapping("/register")
     public String register(@RequestParam(value = "userName") String username,
+                           @RequestParam(value = "name") String name,
                            @RequestParam(value = "lastName") String lastName,
                            @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException, IOException {
         if (userService.getUser(username).isPresent()) {
             return "Username already exists"; // redirect to some error html
         } else {
-
             File file = new File("./CommonPassTenK.txt");
             InputStream commonPassStream = new FileInputStream(file);
-
             InputStreamReader r = new InputStreamReader(commonPassStream);
             Reader[] readers = new Reader[1];
             readers[0] = r;
             WordListDictionary wordListDictionary = new WordListDictionary(
                     WordLists.createFromReader(readers, false, new ArraysSort()));
-
-
-
-
             DictionaryRule dictionaryRule = new DictionaryRule(wordListDictionary);
             //DictionarySubstringRule dictionarySubstringRule = new DictionarySubstringRule(wordListDictionary);
-
-
             PasswordData passwordData = new PasswordData(pw);
             passwordData.setUsername(username);
 
@@ -159,10 +142,6 @@ public class FileUploadController {
                     dictionaryRule
 
             );
-
-
-
-
             RuleResult validate = passwordValidator.validate(passwordData);
             if(!validate.isValid()){
                 String errorCodes = "";
@@ -171,11 +150,11 @@ public class FileUploadController {
                 }
                 return errorCodes;
             }else {
-//                byte[] salt = Salt.getSalt();
-//                byte[] hash = Salt.getSaltedHash(pw, salt);
-//                UserAccount account = new UserAccount(username, salt, hash,name, lastName);
-                  userService.save(account);
-                  return "User created"; // redirect to some logged html
+                byte[] salt = Salt.getSalt();
+                byte[] hash = Salt.getSaltedHash(pw, salt);
+                UserAccount account = new UserAccount(username, salt, hash, name, lastName);
+                userService.save(account);
+                return "User created"; // redirect to some logged html
             }
         }
     }
