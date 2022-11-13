@@ -5,6 +5,7 @@ import com.example.springz23.db.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -19,5 +20,7 @@ public class UserService {
     public Optional<UserAccount> getUser(String id) {
         return repository.findById(id);
     }
+
+    public Iterable<UserAccount> getAllUsers(){return repository.findAll();}
 
 }
