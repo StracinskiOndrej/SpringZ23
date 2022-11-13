@@ -16,6 +16,8 @@ public class UserAccount {
     private String lastName;
     private Double money;
 
+    private String session;
+
     public Double getMoney() {
         return money;
     }
@@ -92,5 +94,13 @@ public class UserAccount {
 
     public void setSaltedHash(byte[] saltedHash) {
         this.saltedHash = saltedHash;
+    }
+
+    public String getSession() {
+        return session;
+    }
+
+    public void setSession(String session) {
+        this.session = session;
     }
 }

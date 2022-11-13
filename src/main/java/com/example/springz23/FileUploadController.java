@@ -30,7 +30,10 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.*;
+
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.UUID;
 
 @CrossOrigin
 @RestController
@@ -122,7 +125,8 @@ public class FileUploadController {
     public String register(@RequestParam(value = "userName") String username,
                            @RequestParam(value = "name") String name,
                            @RequestParam(value = "lastName") String lastName,
-                           @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException, IOException {
+                           @RequestParam(value = "password") String pw
+    ) throws NoSuchAlgorithmException, IOException {
         if (userService.getUser(username).isPresent()) {
             return "Username already exists"; // redirect to some error html
         } else {
@@ -163,10 +167,28 @@ public class FileUploadController {
             }
         }
     }
+    @PostMapping("/logout")
+    public String deleteCookie(@RequestParam(value = "id") String id) {
+        if(userService.getUser(id).isPresent()){
+            userService.getUser(id).get().setSession("");
+            return "login.html";
+        }
+        else{
+            return "index.html";
+        }
+    }
+
+    @PostMapping("/cookie")
+    public String readCookie(@RequestParam(value = "id") String id) {
+        if(userService.getUser(id).isPresent()) {
+            return userService.getUser(id).get().getSession();
+        }
+        return "wrong";
+    }
 
     @PostMapping("/login")
     public String login(@RequestParam(value = "name") String username,
-                              @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException {
+                                        @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException {
 
         if (userService.getUser(username).isPresent()) {
             Optional<UserAccount> user = userService.getUser(username);
@@ -184,6 +206,11 @@ public class FileUploadController {
             if (Arrays.equals(newSaltedHash, user.get().getSaltedHash())) {
                 System.out.println("1");
                 user.get().setI(1);
+                byte[] salt= user.get().getSalt();
+                byte[] saltedName = Salt.getSaltedHash(username,salt);
+                UUID uuid = UUID.nameUUIDFromBytes(saltedName);
+                user.get().setSession(uuid.toString());
+                //add a cookie to the response
                 userService.save(user.get());
                 //return new RedirectView("http://147.175.121.147/z45/index.html");
                 return "OK";
@@ -191,13 +218,13 @@ public class FileUploadController {
                 System.out.println("2");
                 // Not correct password
                 //return new RedirectView("http://147.175.121.147/z45/login.html");
-                return "Wrong password";
+                return "Not correct password";
             }
         } else {
             System.out.println("3");
             // Name not in db
             //return new RedirectView("http://147.175.121.147/z45/login.html");
-            return "Wrong username";
+            return "Name not found";
         }
     }
 
@@ -280,5 +307,4 @@ public class FileUploadController {
     public ResponseEntity<?> handleStorageFileNotFound(StorageFileNotFoundException exc) {
         return ResponseEntity.notFound().build();
     }
-
 }
