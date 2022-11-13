@@ -207,6 +207,9 @@ public class FileUploadController {
                               @RequestParam("reciever") String reciever) throws IOException{
         response.setContentType("multipart/text");
         String path = file.getOriginalFilename();
+        if(sender == reciever){
+            return "nemozete poslat sami sebe";
+        }
 
         String privateKey = "placeHolder";
         String publicKey = "placeHolder";
