@@ -42,7 +42,48 @@ public class FileUploadController {
         this.storageService = storageService;
     }
 
+    @PostMapping("/name")
+    public String getName(@RequestParam(value = "user") String user
+    ) throws NoSuchAlgorithmException {
 
+        if (userService.getUser(user).isPresent()) {
+
+            Optional<UserAccount> account = userService.getUser(user);
+            String name = account.get().getName();
+            return name;
+
+        } else {
+            return "Receiver username not found.";
+        }
+    }
+    @PostMapping ("/lastname")
+    public String getLastName(@RequestParam(value = "user") String user
+    ) throws NoSuchAlgorithmException {
+
+        if (userService.getUser(user).isPresent()) {
+
+            Optional<UserAccount> account = userService.getUser(user);
+            String name = account.get().getLastName();
+            return name;
+
+        } else {
+            return "Receiver username not found.";
+        }
+    }
+    @PostMapping("/money")
+    public String getMoney(@RequestParam(value = "user") String user
+    ) throws NoSuchAlgorithmException {
+
+        if (userService.getUser(user).isPresent()) {
+
+            Optional<UserAccount> account = userService.getUser(user);
+            Double money = account.get().getMoney();
+            return money.toString();
+
+        } else {
+            return "Receiver username not found.";
+        }
+    }
     @PostMapping("/send")
     public String send(@RequestParam(value = "receiver") String receiver,
                            @RequestParam(value = "sender") String sender,
