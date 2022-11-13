@@ -19,6 +19,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.security.InvalidAlgorithmParameterException;
@@ -58,7 +59,8 @@ public class FileUploadController {
 
     @PostMapping("/login")
     public String login(@RequestParam(value = "name") String username,
-                              @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException {
+                        @RequestParam(value = "password") String pw,
+                        HttpServletResponse response) throws NoSuchAlgorithmException {
 
         if (userService.getUser(username).isPresent()) {
             Optional<UserAccount> user = userService.getUser(username);
@@ -77,6 +79,13 @@ public class FileUploadController {
                 System.out.println("1");
                 user.get().setI(1);
                 userService.save(user.get());
+
+                // create a cookie
+                Cookie cookie = new Cookie("loggedIn", "True");
+
+                //add a cookie to the response
+                response.addCookie(cookie);
+
                 //return new RedirectView("http://147.175.121.147/z45/index.html");
                 return "OK";
             } else {
