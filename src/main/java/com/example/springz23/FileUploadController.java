@@ -42,6 +42,38 @@ public class FileUploadController {
         this.storageService = storageService;
     }
 
+
+    @PostMapping("/send")
+    public String send(@RequestParam(value = "receiver") String receiver,
+                           @RequestParam(value = "sender") String sender,
+                           @RequestParam(value = "amount") Integer amount
+                           ) throws NoSuchAlgorithmException {
+
+        if (userService.getUser(receiver).isPresent()) {
+
+            Optional<UserAccount> senderAccount = userService.getUser(sender);
+            Optional<UserAccount> receiverAccount = userService.getUser(receiver);
+            Double senderMoney = senderAccount.get().getMoney();
+            Double receiverMoney = receiverAccount.get().getMoney();
+
+            if(senderMoney >= amount){
+
+                senderMoney = senderMoney - amount;
+                receiverMoney = receiverMoney + amount;
+                senderAccount.get().setMoney(senderMoney);
+                receiverAccount.get().setMoney(receiverMoney);
+
+                userService.save(senderAccount.get());
+                userService.save(receiverAccount.get());
+                return "Money has been sent.";
+            }
+            else{
+                return "You don't have enough money.";
+            }
+        } else {
+            return "Receiver username not found.";
+        }
+    }
     @PostMapping("/register")
     public String register(@RequestParam(value = "userName") String username,
                            @RequestParam(value = "name") String name,
