@@ -82,20 +82,16 @@ public class CryptoUtils {
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(cipherMode, secretKey);
 
-            //byte[] inputBytes = new byte[(int) inputFile.length()];
-
             byte[] inputBytes = new byte[16384];
             try (OutputStream outputStream = new FileOutputStream(outputFile)) {
                 int count = inputStream.read(inputBytes);
 
                 while (count >= 0) {
-                    outputStream.write(cipher.update(inputBytes, 0, count)); // HERE I WAS DOING doFinal() method
-
-                    //AND HERE WAS THE BadPaddingExceotion -- the first pass in the while structure
+                    outputStream.write(cipher.update(inputBytes, 0, count));
 
                     count = inputStream.read(inputBytes);
                 }
-                outputStream.write(cipher.doFinal()); // AND I DID NOT HAD THIS LINE BEFORE
+                outputStream.write(cipher.doFinal());
                 outputStream.flush();
             }
             inputStream.close();
