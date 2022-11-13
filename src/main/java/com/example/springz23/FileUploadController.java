@@ -50,8 +50,82 @@ public class FileUploadController {
         this.storageService = storageService;
     }
 
+    @PostMapping("/name")
+    public String getName(@RequestParam(value = "user") String user
+    ) throws NoSuchAlgorithmException {
+
+        if (userService.getUser(user).isPresent()) {
+
+            Optional<UserAccount> account = userService.getUser(user);
+            String name = account.get().getName();
+            return name;
+
+        } else {
+            return "Receiver username not found.";
+        }
+    }
+    @PostMapping ("/lastname")
+    public String getLastName(@RequestParam(value = "user") String user
+    ) throws NoSuchAlgorithmException {
+
+        if (userService.getUser(user).isPresent()) {
+
+            Optional<UserAccount> account = userService.getUser(user);
+            String name = account.get().getLastName();
+            return name;
+
+        } else {
+            return "Receiver username not found.";
+        }
+    }
+    @PostMapping("/money")
+    public String getMoney(@RequestParam(value = "user") String user
+    ) throws NoSuchAlgorithmException {
+
+        if (userService.getUser(user).isPresent()) {
+
+            Optional<UserAccount> account = userService.getUser(user);
+            Double money = account.get().getMoney();
+            return money.toString();
+
+        } else {
+            return "Receiver username not found.";
+        }
+    }
+    @PostMapping("/send")
+    public String send(@RequestParam(value = "receiver") String receiver,
+                           @RequestParam(value = "sender") String sender,
+                           @RequestParam(value = "amount") Integer amount
+                           ) throws NoSuchAlgorithmException {
+
+        if (userService.getUser(receiver).isPresent()) {
+
+            Optional<UserAccount> senderAccount = userService.getUser(sender);
+            Optional<UserAccount> receiverAccount = userService.getUser(receiver);
+            Double senderMoney = senderAccount.get().getMoney();
+            Double receiverMoney = receiverAccount.get().getMoney();
+
+            if(senderMoney >= amount){
+
+                senderMoney = senderMoney - amount;
+                receiverMoney = receiverMoney + amount;
+                senderAccount.get().setMoney(senderMoney);
+                receiverAccount.get().setMoney(receiverMoney);
+
+                userService.save(senderAccount.get());
+                userService.save(receiverAccount.get());
+                return "Money has been sent.";
+            }
+            else{
+                return "You don't have enough money.";
+            }
+        } else {
+            return "Receiver username not found.";
+        }
+    }
     @PostMapping("/register")
     public String register(@RequestParam(value = "userName") String username,
+                           @RequestParam(value = "lastName") String lastName,
                            @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException, IOException {
         if (userService.getUser(username).isPresent()) {
             return "Username already exists"; // redirect to some error html
@@ -99,11 +173,10 @@ public class FileUploadController {
             }else {
 //                byte[] salt = Salt.getSalt();
 //                byte[] hash = Salt.getSaltedHash(pw, salt);
-//                UserAccount account = new UserAccount(username, salt, hash);
-//                userService.save(account);
-                return "User created"; // redirect to some logged html
+//                UserAccount account = new UserAccount(username, salt, hash,name, lastName);
+                  userService.save(account);
+                  return "User created"; // redirect to some logged html
             }
-
         }
     }
 
