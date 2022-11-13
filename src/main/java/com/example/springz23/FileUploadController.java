@@ -43,14 +43,16 @@ public class FileUploadController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestParam(value = "name") String username,
+    public String register(@RequestParam(value = "userName") String username,
+                           @RequestParam(value = "name") String name,
+                           @RequestParam(value = "lastName") String lastName,
                            @RequestParam(value = "password") String pw) throws NoSuchAlgorithmException {
         if (userService.getUser(username).isPresent()) {
             return "Username already exists"; // redirect to some error html
         } else {
             byte[] salt = Salt.getSalt();
             byte[] hash = Salt.getSaltedHash(pw, salt);
-            UserAccount account = new UserAccount(username, salt, hash);
+            UserAccount account = new UserAccount(username, salt, hash,name, lastName);
             userService.save(account);
             return "User created"; // redirect to some logged html
         }
