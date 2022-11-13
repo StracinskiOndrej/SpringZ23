@@ -30,10 +30,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @CrossOrigin
 @RestController
@@ -238,8 +235,11 @@ public class FileUploadController {
         return userNames;
     }
     @GetMapping("/checkMassages/{reciever}")
-    public List<SentFile> getMassages(@PathVariable("reciever") String reciever){
-        return sentFileService.getSentFile(reciever);
+    public  HashMap<Long, String> getMassages(@PathVariable("reciever") String reciever){
+        List<SentFile> sf = sentFileService.getSentFile(reciever);
+        HashMap<Long, String> idName = new HashMap<>();
+        sf.forEach(sentFile -> idName.put(sentFile.getId(), sentFile.getFileName()));
+        return idName;
     }
     @GetMapping("/key")
     public ResponseEntity<InputStreamResource> getKey(HttpServletResponse response, RedirectAttributes redirectAttributes) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
