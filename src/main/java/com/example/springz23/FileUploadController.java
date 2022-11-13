@@ -237,6 +237,10 @@ public class FileUploadController {
         });
         return userNames;
     }
+    @GetMapping("/checkMassages/{reciever}")
+    public List<SentFile> getMassages(@PathVariable("reciever") String reciever){
+        return sentFileService.getSentFile(reciever);
+    }
     @GetMapping("/key")
     public ResponseEntity<InputStreamResource> getKey(HttpServletResponse response, RedirectAttributes redirectAttributes) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
         response.setContentType("multipart/text");
@@ -250,14 +254,22 @@ public class FileUploadController {
         //return "redirect:http://147.175.121.147/z23/index.html";
     }
 
-    @PostMapping("/recieveFile")
-    public ResponseEntity<InputStreamResource> decryptFile(@RequestParam("fileName") String fileName) throws Exception {
+    @PutMapping("/recieveFile/{id}")
+    public ResponseEntity<InputStreamResource> decryptFile(@PathVariable("id") Long id) throws Exception {
 
+        Optional<SentFile> sentFileO = sentFileService.getSentFile(id);
+        if (sentFileO.isPresent()){
+            SentFile sentFile = sentFileO.get();
+            File f = new File("./filesToSend/"+sentFile.getFileName());
 
-        File f = new File("./filesToSend/"+fileName);
-        InputStream in = new FileInputStream(f);
-        return ResponseEntity.ok()
-                .body(new InputStreamResource(in));
+            List<SentFile> toDelete= sentFileService.getSentFileByName(sentFile.getFileName());
+            toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
+
+            InputStream in = new FileInputStream(f);
+            return ResponseEntity.ok()
+                    .body(new InputStreamResource(in));
+        }
+        return null;
     }
 
     @ExceptionHandler(StorageFileNotFoundException.class)
