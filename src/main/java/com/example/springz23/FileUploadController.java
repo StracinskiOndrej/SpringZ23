@@ -266,6 +266,7 @@ public class FileUploadController {
             toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
 
             InputStream in = new FileInputStream(f);
+            f.delete();
             return ResponseEntity.ok()
                     .body(new InputStreamResource(in));
         }
