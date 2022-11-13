@@ -1,5 +1,7 @@
 package com.example.springz23.services;
 
+import com.example.springz23.db.SentFile;
+import com.example.springz23.db.SentFileRepository;
 import com.example.springz23.db.UserAccount;
 import com.example.springz23.db.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,18 +11,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UserService {
+public class SentFileService {
     @Autowired
-    UserRepository repository;
+    SentFileRepository repository;
 
-    public void save(final UserAccount user) {
-        repository.save(user);
+    public void save(final SentFile file) {
+        repository.save(file);
     }
 
-    public Optional<UserAccount> getUser(String id) {
-        return repository.findById(id);
-    }
-
-    public Iterable<UserAccount> getAllUsers(){return repository.findAll();}
 
 }

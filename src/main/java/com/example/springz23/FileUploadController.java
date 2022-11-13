@@ -1,6 +1,8 @@
 package com.example.springz23;
 
+import com.example.springz23.db.SentFile;
 import com.example.springz23.db.UserAccount;
+import com.example.springz23.services.SentFileService;
 import com.example.springz23.services.UserService;
 import com.example.springz23.storage.StorageFileNotFoundException;
 import com.example.springz23.storage.StorageService;
@@ -22,12 +24,15 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.servlet.http.HttpServletResponse;
+import javax.websocket.server.PathParam;
 import java.io.*;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @CrossOrigin
@@ -37,6 +42,9 @@ public class FileUploadController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private SentFileService sentFileService;
 
     @Autowired
     public FileUploadController(StorageService storageService) {
@@ -196,26 +204,38 @@ public class FileUploadController {
         }
     }
 
-    @PostMapping("/encrypt")
-    public ResponseEntity<InputStreamResource> encryptFile(HttpServletResponse response, @RequestParam("file") MultipartFile file,
-                                                           RedirectAttributes redirectAttributes) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
+    @PostMapping("/sendFile")
+    public String encryptFile(HttpServletResponse response, @RequestParam("file") MultipartFile file,
+                              @RequestParam("sender") String sender,
+                              @RequestParam("reciever") String reciever) throws IOException{
         response.setContentType("multipart/text");
         String path = file.getOriginalFilename();
 
-        File f = new File(path);
-        f.mkdir();
+        String privateKey = "placeHolder";
+        String publicKey = "placeHolder";
+        new File("./filesToSend").mkdir();
+        File f = new File("./filesToSend/"+path);
 
-        try (FileOutputStream out = new FileOutputStream( path+"/"+file.getName())) {
+        try (FileOutputStream out = new FileOutputStream( "./filesToSend/"+path)) {
             out.write(file.getBytes());
         }
+        SentFile sf = new SentFile(sender, reciever, path, privateKey, publicKey);
+        sentFileService.save(sf);
 
+        return "sent";
+    }
 
-        Encrypt encrypt = new Encrypt(file, path);
-
-        InputStream in = new FileInputStream(encrypt.getRealPath());
-        return ResponseEntity.ok()
-                .body(new InputStreamResource(in));
-        //return "redirect:http://147.175.121.147/z23/index.html";
+    @GetMapping("/searchForRecievers/{searchString}")
+    public List<String> getRecievers(@PathVariable("searchString") String searchString){
+        Iterable<UserAccount> users = userService.getAllUsers();
+        List<String> userNames = new ArrayList<>();
+        users.forEach((element)  -> {
+            String userName = element.getUsername();
+            if(userName.startsWith(searchString)){
+                userNames.add(element.getUsername());
+            }
+        });
+        return userNames;
     }
     @GetMapping("/key")
     public ResponseEntity<InputStreamResource> getKey(HttpServletResponse response, RedirectAttributes redirectAttributes) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
@@ -230,19 +250,14 @@ public class FileUploadController {
         //return "redirect:http://147.175.121.147/z23/index.html";
     }
 
-    @PostMapping("/decrypt")
-    public ResponseEntity<InputStreamResource> decryptFile(@RequestParam("file") MultipartFile file, @RequestParam("key") MultipartFile key,
-                                                           RedirectAttributes redirectAttributes) throws Exception {
+    @PostMapping("/recieveFile")
+    public ResponseEntity<InputStreamResource> decryptFile(@RequestParam("fileName") String fileName) throws Exception {
 
 
-        String path = file.getOriginalFilename();
-        File f = new File(path);
-        f.mkdir();
-        Decrypt decrypt = new Decrypt(file, key, path);
-        InputStream in = new FileInputStream(decrypt.getRealPath());
+        File f = new File("./filesToSend/"+fileName);
+        InputStream in = new FileInputStream(f);
         return ResponseEntity.ok()
                 .body(new InputStreamResource(in));
-        //return "redirect:http://147.175.121.147/z23/index.html";
     }
 
     @ExceptionHandler(StorageFileNotFoundException.class)
