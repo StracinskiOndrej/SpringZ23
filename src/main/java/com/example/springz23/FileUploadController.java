@@ -85,6 +85,8 @@ public class FileUploadController {
 
                 //add a cookie to the response
                 response.addCookie(cookie);
+                System.out.println("Cookie: " + cookie.getName());
+                System.out.println("Response: " + response);
 
                 //return new RedirectView("http://147.175.121.147/z45/index.html");
                 return "OK";
