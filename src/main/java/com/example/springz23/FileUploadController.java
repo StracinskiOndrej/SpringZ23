@@ -6,8 +6,9 @@ import com.example.springz23.services.SentFileService;
 import com.example.springz23.services.UserService;
 import com.example.springz23.storage.StorageFileNotFoundException;
 import com.example.springz23.storage.StorageService;
-import com.example.springz23.utilities.Decrypt;
 import com.example.springz23.utilities.Encrypt;
+import com.example.springz23.utilities.EncryptDecrypt;
+import com.example.springz23.utilities.MyKeyPairGenerator;
 import com.example.springz23.utilities.Salt;
 import org.passay.*;
 import org.passay.dictionary.WordListDictionary;
@@ -24,16 +25,13 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.servlet.http.HttpServletResponse;
-import javax.websocket.server.PathParam;
 import java.io.*;
+import java.nio.file.Files;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @CrossOrigin
 @RestController
@@ -161,7 +159,12 @@ public class FileUploadController {
             }else {
                 byte[] salt = Salt.getSalt();
                 byte[] hash = Salt.getSaltedHash(pw, salt);
-                UserAccount account = new UserAccount(username, salt, hash, name, lastName);
+                MyKeyPairGenerator.createKeys();
+                byte[] privKey = MyKeyPairGenerator.aPrivate.getEncoded();
+                byte[] pubKey = MyKeyPairGenerator.aPublic.getEncoded();
+                System.out.println("Private key: \n" +Base64.getEncoder().encodeToString(privKey));
+                System.out.println("Public key: \n" +Base64.getEncoder().encodeToString(pubKey));
+                UserAccount account = new UserAccount(username, salt, hash, name, lastName, Base64.getEncoder().encode(privKey), Base64.getEncoder().encode(pubKey));
                 userService.save(account);
                 return "User created"; // redirect to some logged html
             }
@@ -171,6 +174,7 @@ public class FileUploadController {
     public String deleteCookie(@RequestParam(value = "id") String id) {
         if(userService.getUser(id).isPresent()){
             userService.getUser(id).get().setSession("");
+            userService.save(userService.getUser(id).get());
             return "login.html";
         }
         else{
@@ -231,17 +235,18 @@ public class FileUploadController {
     @PostMapping("/sendFile")
     public String encryptFile(HttpServletResponse response, @RequestParam("file") MultipartFile file,
                               @RequestParam("sender") String sender,
-                              @RequestParam("reciever") String reciever) throws IOException{
+                              @RequestParam("reciever") String reciever) throws Exception {
         response.setContentType("multipart/text");
         String path = file.getOriginalFilename();
 
-        String privateKey = "placeHolder";
-        String publicKey = "placeHolder";
+        byte[] privateKey = userService.getUser(reciever).get().getPrivateKey();
+        byte[] publicKey = userService.getUser(reciever).get().getPublicKey();
         new File("./filesToSend").mkdir();
         File f = new File("./filesToSend/"+path);
-
+        EncryptDecrypt cryptoRSAUtil = new EncryptDecrypt();
+        byte[] encoded = cryptoRSAUtil.encode(file.getBytes(),Base64.getDecoder().decode(publicKey));
         try (FileOutputStream out = new FileOutputStream( "./filesToSend/"+path)) {
-            out.write(file.getBytes());
+            out.write(encoded);
         }
         SentFile sf = new SentFile(sender, reciever, path, privateKey, publicKey);
         sentFileService.save(sf);
@@ -289,8 +294,17 @@ public class FileUploadController {
             SentFile sentFile = sentFileO.get();
             File f = new File("./filesToSend/"+sentFile.getFileName());
 
+            EncryptDecrypt cryptoRSAUtil = new EncryptDecrypt();
+            byte[] decoded = cryptoRSAUtil.decode(Files.readAllBytes(f.toPath()), Base64.getDecoder().decode(sentFile.getPrivateKey()));
             List<SentFile> toDelete= sentFileService.getSentFileByName(sentFile.getFileName());
             toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
+            try (FileOutputStream out = new FileOutputStream( "./filesToSend/"+sentFile.getFileName())) {
+                out.write(decoded);
+            }
+            f = new File("./filesToSend/"+sentFile.getFileName());
+            toDelete= sentFileService.getSentFileByName(sentFile.getFileName());
+            toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
+            System.out.println(Base64.getEncoder().encodeToString(decoded));
 
             InputStream in = new FileInputStream(f);
             f.delete();

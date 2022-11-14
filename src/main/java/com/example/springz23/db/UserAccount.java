@@ -1,5 +1,6 @@
 package com.example.springz23.db;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -10,6 +11,11 @@ public class UserAccount {
     private byte[] salt;
     private byte[] saltedHash;
 
+    @Column(columnDefinition = "BLOB")
+    private byte[] privateKey;
+    @Column(columnDefinition = "BLOB")
+    private byte[] publicKey;
+
     private Integer i = 1;
 
     private String name;
@@ -17,6 +23,8 @@ public class UserAccount {
     private Double money;
 
     private String session;
+
+
 
     public Double getMoney() {
         return money;
@@ -48,13 +56,15 @@ public class UserAccount {
         this.saltedHash = saltedHash;
     }
 
-    public UserAccount(String username, byte[] salt, byte[] saltedHash, String name, String lastName) {
+    public UserAccount(String username, byte[] salt, byte[] saltedHash, String name, String lastName, byte[] pubKey, byte[] privKey) {
         this.username = username;
         this.salt = salt;
         this.saltedHash = saltedHash;
         this.name = name;
         this.lastName = lastName;
-        this.money = 0.0;
+        this.money = 50.0;
+        this.privateKey = privKey;
+        this.publicKey = pubKey;
     }
 
     public UserAccount(String username, byte[] salt) {
@@ -102,5 +112,22 @@ public class UserAccount {
 
     public void setSession(String session) {
         this.session = session;
+    }
+
+
+    public byte[] getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(byte[] publicKey) {
+        this.publicKey = publicKey;
+    }
+
+    public byte[] getPrivateKey() {
+        return privateKey;
+    }
+
+    public void setPrivateKey(byte[] privateKey) {
+        this.privateKey = privateKey;
     }
 }
