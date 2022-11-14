@@ -36,8 +36,6 @@ public class EncryptDecrypt {
     }
 
     public PublicKey loadPublicKey(byte[] bytes) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-
-        // reading from resource folder
         System.out.println(Base64.getEncoder().encodeToString(bytes));
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(bytes);
