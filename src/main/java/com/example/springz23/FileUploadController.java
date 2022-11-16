@@ -239,14 +239,16 @@ public class FileUploadController {
         response.setContentType("multipart/text");
         String path = file.getOriginalFilename();
 
-        byte[] privateKey = userService.getUser(reciever).get().getPrivateKey();
-        byte[] publicKey = userService.getUser(reciever).get().getPublicKey();
+//        byte[] privateKey = userService.getUser(reciever).get().getPrivateKey();
+//        byte[] publicKey = userService.getUser(reciever).get().getPublicKey();
+        byte[] privateKey = "placeholder".getBytes();
+        byte[] publicKey = "placeholder".getBytes();
         new File("./filesToSend").mkdir();
         File f = new File("./filesToSend/"+path);
-        EncryptDecrypt cryptoRSAUtil = new EncryptDecrypt();
-        byte[] encoded = cryptoRSAUtil.encode(file.getBytes(),Base64.getDecoder().decode(publicKey));
+//        EncryptDecrypt cryptoRSAUtil = new EncryptDecrypt();
+//        byte[] encoded = cryptoRSAUtil.encode(file.getBytes(),Base64.getDecoder().decode(publicKey));
         try (FileOutputStream out = new FileOutputStream( "./filesToSend/"+path)) {
-            out.write(encoded);
+            out.write(file.getBytes());
         }
         SentFile sf = new SentFile(sender, reciever, path, privateKey, publicKey);
         sentFileService.save(sf);
@@ -294,17 +296,17 @@ public class FileUploadController {
             SentFile sentFile = sentFileO.get();
             File f = new File("./filesToSend/"+sentFile.getFileName());
 
-            EncryptDecrypt cryptoRSAUtil = new EncryptDecrypt();
-            byte[] decoded = cryptoRSAUtil.decode(Files.readAllBytes(f.toPath()), Base64.getDecoder().decode(sentFile.getPrivateKey()));
+//            EncryptDecrypt cryptoRSAUtil = new EncryptDecrypt();
+//            byte[] decoded = cryptoRSAUtil.decode(Files.readAllBytes(f.toPath()), Base64.getDecoder().decode(sentFile.getPrivateKey()));
+//            List<SentFile> toDelete= sentFileService.getSentFileByName(sentFile.getFileName());
+//            toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
+//            try (FileOutputStream out = new FileOutputStream( "./filesToSend/"+sentFile.getFileName())) {
+//                out.write(decoded);
+//            }
+//            f = new File("./filesToSend/"+sentFile.getFileName());
             List<SentFile> toDelete= sentFileService.getSentFileByName(sentFile.getFileName());
             toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
-            try (FileOutputStream out = new FileOutputStream( "./filesToSend/"+sentFile.getFileName())) {
-                out.write(decoded);
-            }
-            f = new File("./filesToSend/"+sentFile.getFileName());
-            toDelete= sentFileService.getSentFileByName(sentFile.getFileName());
-            toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
-            System.out.println(Base64.getEncoder().encodeToString(decoded));
+//            System.out.println(Base64.getEncoder().encodeToString(decoded));
 
             InputStream in = new FileInputStream(f);
             f.delete();
