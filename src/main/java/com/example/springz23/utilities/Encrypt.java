@@ -1,5 +1,6 @@
-package com.example.springz23;
+package com.example.springz23.utilities;
 
+import com.example.springz23.CryptoException;
 import org.apache.tika.Tika;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,18 +18,18 @@ import java.util.Base64;
 public class Encrypt {
     private final File encrypted;
     private static String key;
-    public Encrypt(MultipartFile file) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+    public Encrypt(MultipartFile file, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
         String keyStr = generateKey();
         try {
             Tika tika = new Tika();
             String type = tika.detect(file.getBytes());
             type = MimeTypes.getDefaultExt(type);
-            this.encrypted =new File("encrypted."+type);
+            this.encrypted =new File(path+"/encrypted."+type);
             CryptoUtils.encrypt(keyStr, file.getInputStream(), encrypted);
         } catch (CryptoException e) {
             throw new RuntimeException(e);
         }
-        outputKey(keyStr);
+        outputKey(keyStr, path);
     }
 
     private String generateKey() {
@@ -42,11 +43,11 @@ public class Encrypt {
         return Base64.getEncoder().encodeToString(secretKey.getEncoded());
     }
 
-    private void outputKey(String keyText) {
+    private void outputKey(String keyText, String path) {
         System.out.println(keyText);
 
         try {
-            key = "key_"+encrypted.getName();
+            key = path+"/key_"+encrypted.getName()+".text";
             Files.writeString(Path.of(key), keyText);
         } catch (IOException e) {
             throw new RuntimeException(e);

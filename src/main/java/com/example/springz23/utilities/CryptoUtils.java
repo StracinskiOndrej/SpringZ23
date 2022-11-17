@@ -1,4 +1,6 @@
-package com.example.springz23;
+package com.example.springz23.utilities;
+
+import com.example.springz23.CryptoException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -23,10 +25,23 @@ public class CryptoUtils {
             throws CryptoException {
         doCrypto(Cipher.ENCRYPT_MODE, key, inputStream, outputFile);
     }
+    public static void encryptKey(Key key, InputStream inputStream, File outputFile)
+            throws CryptoException {
+        doCryptoKey(Cipher.ENCRYPT_MODE, key, inputStream, outputFile);
+    }
 
     public static void decrypt(String key, InputStream inputStream, File outputFile)
             throws CryptoException {
         doCrypto(Cipher.DECRYPT_MODE, key, inputStream, outputFile);
+    }
+
+    public static void decryptByKey(Key key, InputStream inputStream, File outputFile)
+            throws CryptoException {
+        doCryptoKey(Cipher.DECRYPT_MODE, key, inputStream, outputFile);
+    }
+    public static void decryptKey(Key key, InputStream inputStream, File outputFile)
+            throws CryptoException {
+        doCryptoKey(Cipher.DECRYPT_MODE, key, inputStream, outputFile);
     }
 
     private static void doCrypto(int cipherMode, String key, InputStream inputStream,
@@ -59,6 +74,34 @@ public class CryptoUtils {
             throw new CryptoException("Error encrypting/decrypting file", ex);
         }
     }
+
+    private static void doCryptoKey(int cipherMode, Key key, InputStream inputStream,
+                                 File outputFile) throws CryptoException {
+        try {
+            Key secretKey = key;
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(cipherMode, secretKey);
+
+            byte[] inputBytes = new byte[16384];
+            try (OutputStream outputStream = new FileOutputStream(outputFile)) {
+                int count = inputStream.read(inputBytes);
+
+                while (count >= 0) {
+                    outputStream.write(cipher.update(inputBytes, 0, count));
+
+                    count = inputStream.read(inputBytes);
+                }
+                outputStream.write(cipher.doFinal());
+                outputStream.flush();
+            }
+            inputStream.close();
+
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | IOException
+                 | IllegalArgumentException | IllegalBlockSizeException | BadPaddingException ex) {
+            throw new CryptoException("Error encrypting/decrypting file", ex);
+        }
+    }
+
 
 }
 

@@ -1,5 +1,6 @@
-package com.example.springz23;
+package com.example.springz23.utilities;
 
+import com.example.springz23.CryptoException;
 import org.apache.tika.Tika;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,7 +16,7 @@ import java.security.spec.InvalidKeySpecException;
 
 public class Decrypt {
     private final File decrypt;
-    public Decrypt(MultipartFile file, MultipartFile keyFile) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
+    public Decrypt(MultipartFile file, MultipartFile keyFile, String path) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
         try {
             String key;
             Tika tika = new Tika();
@@ -24,7 +25,7 @@ public class Decrypt {
             type = MimeTypes.getDefaultExt(type);
             byte[] encoded = keyFile.getBytes();
             key = new String(encoded);
-            decrypt = new File("decrypted." + "txt");
+            decrypt = new File(path+"/decrypted." + "txt");
             CryptoUtils.decrypt(key, file.getInputStream(), decrypt);
         } catch (CryptoException e) {
             throw new RuntimeException(e);
