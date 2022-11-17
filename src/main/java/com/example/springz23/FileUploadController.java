@@ -239,10 +239,10 @@ public class FileUploadController {
         response.setContentType("multipart/text");
         String path = file.getOriginalFilename();
 
-//        byte[] privateKey = userService.getUser(reciever).get().getPrivateKey();
-//        byte[] publicKey = userService.getUser(reciever).get().getPublicKey();
-        byte[] privateKey = "placeholder".getBytes();
-        byte[] publicKey = "placeholder".getBytes();
+        byte[] privateKey = userService.getUser(reciever).get().getPrivateKey();
+        byte[] publicKey = userService.getUser(reciever).get().getPublicKey();
+//        byte[] privateKey = "placeholder".getBytes();
+//        byte[] publicKey = "placeholder".getBytes();
         new File("./filesToSend").mkdir();
         File f = new File("./filesToSend/"+path);
 //        EncryptDecrypt cryptoRSAUtil = new EncryptDecrypt();
@@ -258,6 +258,7 @@ public class FileUploadController {
 
     @GetMapping("/searchForRecievers/{searchString}")
     public List<String> getRecievers(@PathVariable("searchString") String searchString){
+        System.out.println(searchString);
         Iterable<UserAccount> users = userService.getAllUsers();
         List<String> userNames = new ArrayList<>();
         users.forEach((element)  -> {
@@ -266,8 +267,10 @@ public class FileUploadController {
                 userNames.add(element.getUsername());
             }
         });
+        System.out.println(userNames);
         return userNames;
     }
+
     @GetMapping("/checkMassages/{reciever}")
     public  HashMap<Long, String> getMassages(@PathVariable("reciever") String reciever){
         List<SentFile> sf = sentFileService.getSentFile(reciever);
