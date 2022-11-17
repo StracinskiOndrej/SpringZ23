@@ -21,6 +21,7 @@ public class SentFileService {
     public Optional<SentFile> getSentFile(Long id) {
         return repository.findById(id);
     }
+
     public List<SentFile> getSentFile(String reciever) {
         Iterable<SentFile> allSentFiles =  repository.findAll();
         List<SentFile> recieversFiles = new ArrayList<>();
@@ -32,6 +33,7 @@ public class SentFileService {
 
         return recieversFiles;
     }
+
     public List<SentFile> getSentFileByName(String fileName) {
         Iterable<SentFile> allSentFiles =  repository.findAll();
         List<SentFile> files = new ArrayList<>();

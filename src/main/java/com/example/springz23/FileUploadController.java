@@ -252,9 +252,8 @@ public class FileUploadController {
             out.write(encoded);
         }
 
-        SentFile sf = new SentFile(sender, reciever, path, privateKey, publicKey);
+        SentFile sf = new SentFile(sender, reciever, f.getName(), privateKey, publicKey);
         sentFileService.save(sf);
-
 
         return "sent";
     }

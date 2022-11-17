@@ -1,9 +1,6 @@
 package com.example.springz23.db;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 public class SentFile {
@@ -13,7 +10,9 @@ public class SentFile {
     private String sender;
     private String reciever;
     private String fileName;
+    @Column(columnDefinition = "BLOB")
     private  byte[] privateKey;
+    @Column(columnDefinition = "BLOB")
     private byte[] publicKey;
 
     public SentFile() {
