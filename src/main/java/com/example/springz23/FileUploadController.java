@@ -16,6 +16,7 @@ import org.passay.dictionary.WordLists;
 import org.passay.dictionary.sort.ArraysSort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.jpa.repository.query.JSqlParserUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -241,6 +242,10 @@ public class FileUploadController {
 
         byte[] privateKey = userService.getUser(reciever).get().getPrivateKey();
         byte[] publicKey = userService.getUser(reciever).get().getPublicKey();
+        System.out.println("Sender:"+sender);
+        System.out.println("Receiver:"+reciever);
+        System.out.println(Arrays.toString(publicKey));
+        System.out.println(Arrays.toString(privateKey));
 //        byte[] privateKey = "placeholder".getBytes();
 //        byte[] publicKey = "placeholder".getBytes();
         new File("./filesToSend").mkdir();
@@ -250,15 +255,16 @@ public class FileUploadController {
         try (FileOutputStream out = new FileOutputStream( "./filesToSend/"+path)) {
             out.write(file.getBytes());
         }
+        System.out.println("MARS");
         SentFile sf = new SentFile(sender, reciever, path, privateKey, publicKey);
+        System.out.println("pred saveom");
         sentFileService.save(sf);
-
+        System.out.println("po save");
         return "sent";
     }
 
     @GetMapping("/searchForRecievers/{searchString}")
     public List<String> getRecievers(@PathVariable("searchString") String searchString){
-        System.out.println(searchString);
         Iterable<UserAccount> users = userService.getAllUsers();
         List<String> userNames = new ArrayList<>();
         users.forEach((element)  -> {
@@ -267,7 +273,6 @@ public class FileUploadController {
                 userNames.add(element.getUsername());
             }
         });
-        System.out.println(userNames);
         return userNames;
     }
 
