@@ -1,8 +1,12 @@
 package com.example.springz23;
 
+import com.example.springz23.db.Comment;
 import com.example.springz23.db.SentFile;
+import com.example.springz23.db.Stock;
 import com.example.springz23.db.UserAccount;
+import com.example.springz23.services.CommentService;
 import com.example.springz23.services.SentFileService;
+import com.example.springz23.services.StockService;
 import com.example.springz23.services.UserService;
 import com.example.springz23.storage.StorageFileNotFoundException;
 import com.example.springz23.storage.StorageService;
@@ -45,7 +49,14 @@ public class FileUploadController {
     private SentFileService sentFileService;
 
     @Autowired
+    private StockService stockService;
+
+    @Autowired
+    private CommentService commentService;
+
+    @Autowired
     public FileUploadController(StorageService storageService) {
+
     }
 
     @PostMapping("/name")
@@ -73,6 +84,14 @@ public class FileUploadController {
         } else {
             return "Receiver username not found.";
         }
+    }
+
+    @GetMapping("/test")
+    public int test(){
+
+        stockService.save(new Stock("tst", "test", 123, 1.2f, "test je tst blablabla"));
+        commentService.save(new Comment(1L, "tst", "biedny stock"));
+        return 1;
     }
     @PostMapping("/money")
     public String getMoney(@RequestParam(value = "user") String user

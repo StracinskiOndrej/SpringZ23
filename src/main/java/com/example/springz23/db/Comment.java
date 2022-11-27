@@ -1,17 +1,15 @@
 package com.example.springz23.db;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 public class Comment {
     @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     private Long userId;
     private String stockId;
 
-    @Column( columnDefinition = "LONGTEXT")
     private String content;
 
     public Comment() {
@@ -41,8 +39,7 @@ public class Comment {
         this.content = content;
     }
 
-    public Comment(Long id, Long userId, String stockId, String content) {
-        this.id = id;
+    public Comment( Long userId, String stockId, String content) {
         this.userId = userId;
         this.stockId = stockId;
         this.content = content;

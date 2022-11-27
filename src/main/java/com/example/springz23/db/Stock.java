@@ -16,7 +16,6 @@ public class Stock {
     private float currentPrice;
 
     private float currentTrend;
-    @Column( columnDefinition = "LONGTEXT")
     private String description;
 
     public Stock(String id, String name, float currentPrice, float currentTrend, String description) {
