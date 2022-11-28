@@ -1,13 +1,7 @@
 package com.example.springz23;
 
-import com.example.springz23.db.Comment;
-import com.example.springz23.db.SentFile;
-import com.example.springz23.db.Stock;
-import com.example.springz23.db.UserAccount;
-import com.example.springz23.services.CommentService;
-import com.example.springz23.services.SentFileService;
-import com.example.springz23.services.StockService;
-import com.example.springz23.services.UserService;
+import com.example.springz23.db.*;
+import com.example.springz23.services.*;
 import com.example.springz23.storage.StorageFileNotFoundException;
 import com.example.springz23.storage.StorageService;
 import com.example.springz23.utilities.Encrypt;
@@ -53,6 +47,9 @@ public class FileUploadController {
 
     @Autowired
     private CommentService commentService;
+
+    @Autowired
+    private OwnedStockService ownedStockService;
 
     @Autowired
     public FileUploadController(StorageService storageService) {
@@ -398,6 +395,70 @@ public class FileUploadController {
         commentService.save(new Comment(userName, stockId, comment));
 
         return "Success";
+    }
+
+    @PutMapping("/buyStock")
+    public String buyStock(@RequestParam("buyer") String userName,
+                           @RequestParam("stock") String stockId,
+                           @RequestParam("amount") float amount){
+
+        Optional<UserAccount> userO = userService.getUser(userName);
+        if(!userO.isPresent()){
+            return "??? user"
+;        }
+        Optional<Stock> stockO = stockService.getStock(stockId);
+        if(!stockO.isPresent()){
+            return "??? stock";
+        }
+        UserAccount user = userO.get();
+        Stock stock = stockO.get();
+
+        if(user.getMoney() < stock.getCurrentPrice()*amount){
+            return "Not enough money";
+        }
+
+
+
+        user.setMoney(user.getMoney() - stock.getCurrentPrice()*amount);
+
+        userService.save(user);
+        List<String> test = new ArrayList<>();
+        Iterable<OwnedStock> allOwnedStocks = ownedStockService.getAllOwnedStock();
+            allOwnedStocks.forEach(os ->{
+                if(userName.equals(os.getUserId()) && stockId.equals(os.getStockId())){
+                    os.setAmount(os.getAmount()+amount);
+                    ownedStockService.save(os);
+                    test.add("saved");
+                    }
+                }
+            );
+
+        if(test.isEmpty()){
+            ownedStockService.save(new OwnedStock(userName, stockId, amount));
+        }
+        return "OK";
+    }
+
+    @GetMapping("/getOwnedStocks/{userId}")
+    public List<String> getOwnedStockByUser(@PathVariable("userId") String userId){
+        List<String> ownedStocks = new ArrayList<>();
+        Iterable<OwnedStock> allOwnedStocks = ownedStockService.getAllOwnedStock();
+        System.out.println(userId);
+        allOwnedStocks.forEach(os ->{
+            if(os.getUserId().equals(userId)){
+
+                Optional<Stock> stockO = stockService.getStock(os.getStockId());
+                if(!stockO.isPresent()){
+
+                    return;
+                }
+                Stock stock = stockO.get();
+                ownedStocks.add(stock.getId()+" "+ stock.getName()+" "+ stock.getCurrentPrice() + " amount owned: "+os.getAmount());
+
+            }
+        });
+
+        return ownedStocks;
     }
 
     @ExceptionHandler(StorageFileNotFoundException.class)

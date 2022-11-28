@@ -44,7 +44,7 @@ public class OwnedStock {
     public OwnedStock() {
     }
 
-    public OwnedStock(Long id, String userId, String stockId, float amount) {
+    public OwnedStock(String userId, String stockId, float amount) {
         this.userId = userId;
         this.stockId = stockId;
         this.amount = amount;
