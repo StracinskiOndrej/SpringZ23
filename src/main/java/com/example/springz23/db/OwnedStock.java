@@ -1,19 +1,19 @@
 package com.example.springz23.db;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
 @Entity
-public class Comment {
+public class OwnedStock {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
+
     private String userId;
+
     private String stockId;
-
-    private String content;
-
-    public Comment() {
-    }
 
     public String getUserId() {
         return userId;
@@ -31,28 +31,31 @@ public class Comment {
         this.stockId = stockId;
     }
 
-    public String getContent() {
-        return content;
+    public float getAmount() {
+        return amount;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setAmount(float amount) {
+        this.amount = amount;
     }
 
-    public Comment( String userId, String stockId, String content) {
+    private float amount;
+
+    public OwnedStock() {
+    }
+
+    public OwnedStock(Long id, String userId, String stockId, float amount) {
         this.userId = userId;
         this.stockId = stockId;
-        this.content = content;
+        this.amount = amount;
     }
 
     public void setId(Long id) {
         this.id = id;
     }
 
+
     public Long getId() {
         return id;
     }
-
-
-
 }

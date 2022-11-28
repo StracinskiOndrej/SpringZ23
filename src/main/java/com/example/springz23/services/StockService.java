@@ -6,6 +6,8 @@ import com.example.springz23.db.UserAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class StockService {
     @Autowired
@@ -14,4 +16,9 @@ public class StockService {
     public void save(final Stock stock) {
         repository.save(stock);
     }
+
+    public Optional<Stock> getStock(String id) {
+        return repository.findById(id);
+    }
+    public Iterable<Stock> getAllStocks(){return repository.findAll();}
 }

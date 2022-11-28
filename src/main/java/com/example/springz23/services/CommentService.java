@@ -14,4 +14,6 @@ public class CommentService {
     public void save(final Comment comment) {
         repository.save(comment);
     }
+
+    public Iterable<Comment> getAllComments(){return repository.findAll();}
 }
