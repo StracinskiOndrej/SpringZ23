@@ -1,9 +1,7 @@
 package com.example.springz23;
 
-import com.example.springz23.db.SentFile;
-import com.example.springz23.db.UserAccount;
-import com.example.springz23.services.SentFileService;
-import com.example.springz23.services.UserService;
+import com.example.springz23.db.*;
+import com.example.springz23.services.*;
 import com.example.springz23.storage.StorageFileNotFoundException;
 import com.example.springz23.storage.StorageService;
 import com.example.springz23.utilities.Encrypt;
@@ -45,7 +43,17 @@ public class FileUploadController {
     private SentFileService sentFileService;
 
     @Autowired
+    private StockService stockService;
+
+    @Autowired
+    private CommentService commentService;
+
+    @Autowired
+    private OwnedStockService ownedStockService;
+
+    @Autowired
     public FileUploadController(StorageService storageService) {
+
     }
 
     @PostMapping("/name")
@@ -74,6 +82,21 @@ public class FileUploadController {
             return "Receiver username not found.";
         }
     }
+
+    @GetMapping("/test")
+    public int test(){
+
+        stockService.save(new Stock("TSLA", "Tesla, INC", 182.86f, -0.19f, "Tesla, spolocnost primarne pre samovoziace vozidla."));
+        stockService.save(new Stock("META", "META PLATFORMS, INC", 111.41f, -0.83f, "Facebook, instagram a primarne miesta za zdielania obrazkov jedla."));
+        stockService.save(new Stock("AAPL", "APPLE INC", 148.11f, -2.96f, "Vyrobca plniacich kablov ktore sa pokazia za 2 tyzdne."));
+        stockService.save(new Stock("GME", "GameStop Corp.", 26.17f, -1.99f, "To the moon"));
+        stockService.save(new Stock("GOOGL", "Alphabet Inc Class A", 97.46f, -1.00f, "Kto vie co nerobia"));
+
+        return 1;
+    }
+
+
+
     @PostMapping("/money")
     public String getMoney(@RequestParam(value = "user") String user
     ) throws NoSuchAlgorithmException {
@@ -262,7 +285,7 @@ public class FileUploadController {
         List<String> userNames = new ArrayList<>();
         users.forEach((element)  -> {
             String userName = element.getUsername();
-            if(userName.startsWith(searchString)){
+            if(userName.toUpperCase().startsWith(searchString.toUpperCase())){
                 userNames.add(element.getUsername());
             }
         });
@@ -314,6 +337,128 @@ public class FileUploadController {
                     .body(new InputStreamResource(in));
         }
         return null;
+    }
+
+    @GetMapping("/searchForStocks/{searchString}")
+    public List<String> getStocks(@PathVariable("searchString") String searchString){
+
+        Iterable<Stock> stocks = stockService.getAllStocks();
+        List<String> stockData = new ArrayList<>();
+        stocks.forEach((element)  -> {
+            String stockName = element.getName();
+            if(stockName.toUpperCase().startsWith(searchString.toUpperCase())){
+                stockData.add(element.getId() + " " + element.getName() + " " + element.getCurrentPrice() + " " + element.getCurrentTrend());
+            }
+        });
+        return stockData;
+    }
+
+    @GetMapping("/getComments/{stockId}")
+    public List<String> getComments(@PathVariable("stockId") String stockId){
+
+        Iterable<Comment> comments = commentService.getAllComments();
+        List<String> commentsToSend = new ArrayList<>();
+        comments.forEach((element)  -> {
+            String commentsStockId = element.getStockId();
+            if(commentsStockId.toUpperCase().equals(stockId.toUpperCase())){
+                commentsToSend.add(element.getUserId()+" "+element.getContent());
+            }
+        });
+        return commentsToSend;
+    }
+    @GetMapping("/getStock/{stockId}")
+    public List<String> getStock(@PathVariable("stockId") String stockId){
+
+        Optional<Stock> stockO = stockService.getStock(stockId);
+        List<String> stockData =  new ArrayList<>();
+
+        if(stockO.isPresent()){
+            Stock stock = stockO.get();
+            stockData.add(stock.getId());
+            stockData.add(stock.getName());
+            stockData.add(String.valueOf(stock.getCurrentPrice()));
+            stockData.add(String.valueOf(stock.getCurrentTrend()));
+            stockData.add(stock.getDescription());
+            return stockData;
+        }
+        return new ArrayList<>();
+    }
+
+    @PostMapping("/comment")
+    public String comment(@RequestParam("commentor") String userName,
+                          @RequestParam("stock") String stockId,
+                          @RequestParam("comment") String comment){
+        if(comment.length()>=255){
+            return "Comment too long";
+        }
+
+        commentService.save(new Comment(userName, stockId, comment));
+
+        return "Success";
+    }
+
+    @PutMapping("/buyStock")
+    public String buyStock(@RequestParam("buyer") String userName,
+                           @RequestParam("stock") String stockId,
+                           @RequestParam("amount") float amount){
+
+        Optional<UserAccount> userO = userService.getUser(userName);
+        if(!userO.isPresent()){
+            return "??? user"
+;        }
+        Optional<Stock> stockO = stockService.getStock(stockId);
+        if(!stockO.isPresent()){
+            return "??? stock";
+        }
+        UserAccount user = userO.get();
+        Stock stock = stockO.get();
+
+        if(user.getMoney() < stock.getCurrentPrice()*amount){
+            return "Not enough money";
+        }
+
+
+
+        user.setMoney(user.getMoney() - stock.getCurrentPrice()*amount);
+
+        userService.save(user);
+        List<String> test = new ArrayList<>();
+        Iterable<OwnedStock> allOwnedStocks = ownedStockService.getAllOwnedStock();
+            allOwnedStocks.forEach(os ->{
+                if(userName.equals(os.getUserId()) && stockId.equals(os.getStockId())){
+                    os.setAmount(os.getAmount()+amount);
+                    ownedStockService.save(os);
+                    test.add("saved");
+                    }
+                }
+            );
+
+        if(test.isEmpty()){
+            ownedStockService.save(new OwnedStock(userName, stockId, amount));
+        }
+        return "OK";
+    }
+
+    @GetMapping("/getOwnedStocks/{userId}")
+    public List<String> getOwnedStockByUser(@PathVariable("userId") String userId){
+        List<String> ownedStocks = new ArrayList<>();
+        Iterable<OwnedStock> allOwnedStocks = ownedStockService.getAllOwnedStock();
+        System.out.println(userId);
+        allOwnedStocks.forEach(os ->{
+            if(os.getUserId().equals(userId)){
+
+                Optional<Stock> stockO = stockService.getStock(os.getStockId());
+                if(!stockO.isPresent()){
+
+                    return;
+                }
+                Stock stock = stockO.get();
+                ownedStocks.add(stock.getId()+" "+ stock.getName()+" "+ stock.getCurrentPrice() + " amount owned: "+os.getAmount());
+
+            }
+        });
+
+        return ownedStocks;
     }
 
     @ExceptionHandler(StorageFileNotFoundException.class)
