@@ -13,18 +13,14 @@ public class SentFile {
     private String sender;
     private String reciever;
     private String fileName;
-    private  byte[] privateKey;
-    private byte[] publicKey;
 
     public SentFile() {
     }
 
-    public SentFile(String sender, String reciever, String fileName, byte[] privateKey, byte[] publicKey) {
+    public SentFile(String sender, String reciever, String fileName) {
         this.sender = sender;
         this.reciever = reciever;
         this.fileName = fileName;
-        this.privateKey = privateKey;
-        this.publicKey = publicKey;
     }
 
     public String getSender() {
@@ -49,22 +45,6 @@ public class SentFile {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
-    }
-
-    public byte[] getPrivateKey() {
-        return privateKey;
-    }
-
-    public void setPrivateKey(byte[] privateKey) {
-        this.privateKey = privateKey;
-    }
-
-    public byte[] getPublicKey() {
-        return publicKey;
-    }
-
-    public void setPublicKey(byte[] publicKey) {
-        this.publicKey = publicKey;
     }
 
     public void setId(Long id) {

@@ -7,13 +7,7 @@ import com.example.springz23.services.UserService;
 import com.example.springz23.storage.StorageFileNotFoundException;
 import com.example.springz23.storage.StorageService;
 import com.example.springz23.utilities.Encrypt;
-import com.example.springz23.utilities.EncryptDecrypt;
-import com.example.springz23.utilities.MyKeyPairGenerator;
 import com.example.springz23.utilities.Salt;
-import org.passay.*;
-import org.passay.dictionary.WordListDictionary;
-import org.passay.dictionary.WordLists;
-import org.passay.dictionary.sort.ArraysSort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +19,10 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.nio.file.Files;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -128,46 +124,42 @@ public class FileUploadController {
         if (userService.getUser(username).isPresent()) {
             return "Username already exists"; // redirect to some error html
         } else {
-            File file = new File("./CommonPassTenK.txt");
-            InputStream commonPassStream = new FileInputStream(file);
-            InputStreamReader r = new InputStreamReader(commonPassStream);
-            Reader[] readers = new Reader[1];
-            readers[0] = r;
-            WordListDictionary wordListDictionary = new WordListDictionary(
-                    WordLists.createFromReader(readers, false, new ArraysSort()));
-            DictionaryRule dictionaryRule = new DictionaryRule(wordListDictionary);
-            //DictionarySubstringRule dictionarySubstringRule = new DictionarySubstringRule(wordListDictionary);
-            PasswordData passwordData = new PasswordData(pw);
-            passwordData.setUsername(username);
-
-            PasswordValidator passwordValidator = new PasswordValidator(
-                    new UsernameRule(),
-                    new CharacterRule(EnglishCharacterData.LowerCase, 1),
-                    new CharacterRule(EnglishCharacterData.UpperCase, 1),
-                    new CharacterRule(EnglishCharacterData.Digit, 1),
-                    new LengthRule(8, 24),
-                    dictionaryRule
-
-            );
-            RuleResult validate = passwordValidator.validate(passwordData);
-            if(!validate.isValid()){
-                String errorCodes = "";
-                for(RuleResultDetail rrd : validate.getDetails()){
-                    errorCodes += rrd.getErrorCode()+", ";
-                }
-                return errorCodes;
-            }else {
+//            File file = new File("./CommonPassTenK.txt");
+//            InputStream commonPassStream = new FileInputStream(file);
+//            InputStreamReader r = new InputStreamReader(commonPassStream);
+//            Reader[] readers = new Reader[1];
+//            readers[0] = r;
+//            WordListDictionary wordListDictionary = new WordListDictionary(
+//                    WordLists.createFromReader(readers, false, new ArraysSort()));
+//            DictionaryRule dictionaryRule = new DictionaryRule(wordListDictionary);
+//            //DictionarySubstringRule dictionarySubstringRule = new DictionarySubstringRule(wordListDictionary);
+//            PasswordData passwordData = new PasswordData(pw);
+//            passwordData.setUsername(username);
+//
+//            PasswordValidator passwordValidator = new PasswordValidator(
+//                    new UsernameRule(),
+//                    new CharacterRule(EnglishCharacterData.LowerCase, 1),
+//                    new CharacterRule(EnglishCharacterData.UpperCase, 1),
+//                    new CharacterRule(EnglishCharacterData.Digit, 1),
+//                    new LengthRule(8, 24),
+//                    dictionaryRule
+//
+//            );
+//            RuleResult validate = passwordValidator.validate(passwordData);
+//            if(!validate.isValid()){
+//                String errorCodes = "";
+//                for(RuleResultDetail rrd : validate.getDetails()){
+//                    errorCodes += rrd.getErrorCode()+", ";
+//                }
+//                return errorCodes;
+//            }else {
                 byte[] salt = Salt.getSalt();
                 byte[] hash = Salt.getSaltedHash(pw, salt);
-                MyKeyPairGenerator.createKeys();
-                byte[] privKey = MyKeyPairGenerator.aPrivate.getEncoded();
-                byte[] pubKey = MyKeyPairGenerator.aPublic.getEncoded();
-                System.out.println("Private key: \n" +Base64.getEncoder().encodeToString(privKey));
-                System.out.println("Public key: \n" +Base64.getEncoder().encodeToString(pubKey));
-                UserAccount account = new UserAccount(username, salt, hash, name, lastName, Base64.getEncoder().encode(privKey), Base64.getEncoder().encode(pubKey));
+                ScriptExecutor.execute("keyCreator.exe",username,"");
+                UserAccount account = new UserAccount(username, salt, hash, name, lastName, new byte[2], new byte[2]);
                 userService.save(account);
                 return "User created"; // redirect to some logged html
-            }
+//            }
         }
     }
     @PostMapping("/logout")
@@ -238,19 +230,9 @@ public class FileUploadController {
                               @RequestParam("reciever") String reciever) throws Exception {
         response.setContentType("multipart/text");
         String path = file.getOriginalFilename();
-
-        byte[] privateKey = userService.getUser(reciever).get().getPrivateKey();
-        byte[] publicKey = userService.getUser(reciever).get().getPublicKey();
-        new File("./filesToSend").mkdir();
-        File f = new File("./filesToSend/"+path);
-        EncryptDecrypt cryptoRSAUtil = new EncryptDecrypt();
-        byte[] encoded = cryptoRSAUtil.encode(file.getBytes(),Base64.getDecoder().decode(publicKey));
-        try (FileOutputStream out = new FileOutputStream( "./filesToSend/"+path)) {
-            out.write(encoded);
-        }
-        SentFile sf = new SentFile(sender, reciever, path, privateKey, publicKey);
+        ScriptExecutor.execute("Encryptor.exe", sender, path);
+        SentFile sf = new SentFile(sender, reciever, path);
         sentFileService.save(sf);
-
         return "sent";
     }
 
@@ -292,22 +274,13 @@ public class FileUploadController {
         Optional<SentFile> sentFileO = sentFileService.getSentFile(id);
         if (sentFileO.isPresent()){
             SentFile sentFile = sentFileO.get();
-            File f = new File("./filesToSend/"+sentFile.getFileName());
-
-            EncryptDecrypt cryptoRSAUtil = new EncryptDecrypt();
-            byte[] decoded = cryptoRSAUtil.decode(Files.readAllBytes(f.toPath()), Base64.getDecoder().decode(sentFile.getPrivateKey()));
-            List<SentFile> toDelete= sentFileService.getSentFileByName(sentFile.getFileName());
-            toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
-            try (FileOutputStream out = new FileOutputStream( "./filesToSend/"+sentFile.getFileName())) {
-                out.write(decoded);
-            }
-            f = new File("./filesToSend/"+sentFile.getFileName());
-            toDelete= sentFileService.getSentFileByName(sentFile.getFileName());
-            toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
-            System.out.println(Base64.getEncoder().encodeToString(decoded));
-
+            File f = new File("./"+sentFile.getSender()+"/"+sentFile.getFileName());
+            System.out.println("File name: " + sentFile.getFileName());
+            ScriptExecutor.execute("Decryptor.exe",sentFile.getSender(), sentFile.getFileName());
+            f = new File("./"+sentFile.getSender()+"/"+sentFile.getFileName());
+//            List<SentFile> toDelete= sentFileService.getSentFileByName(sentFile.getFileName());
+//            toDelete.forEach((sf) -> sentFileService.deleteSentFile(sf.getId()));
             InputStream in = new FileInputStream(f);
-            f.delete();
             return ResponseEntity.ok()
                     .body(new InputStreamResource(in));
         }

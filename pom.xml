@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>SpringZ23</artifactId>
+    <artifactId>SpringZ6-test</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>SpringZ23</name>
     <description>SpringZ23</description>
@@ -57,6 +57,11 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.python</groupId>
+            <artifactId>jython</artifactId>
+            <version>2.7.3b1</version>
         </dependency>
     </dependencies>
 
